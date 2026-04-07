@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Michelle Chan | NVIDIA Revenue Analytics Business Case</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --nv: #76B900; --nv-dark: #5a9200; --nv-glow: rgba(118,185,0,0.15);
+  --bg: #0a0a16; --card: #12122a; --border: #252550;
+  --text: #e4e4f0; --muted: #8888aa; --blue: #4fc3f7; --purple: #b388ff;
+  --orange: #ffb74d; --red: #ef5350; --teal: #26c6da;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);line-height:1.65}
+a{color:var(--nv);text-decoration:none}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,22,0.92);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 40px}
+.logo{font-size:16px;font-weight:700;color:var(--nv);letter-spacing:1px}
+.logo span{color:var(--text);font-weight:300}
+nav ul{list-style:none;display:flex;gap:28px}
+nav a{color:var(--muted);font-size:13px;font-weight:500;transition:color .3s}
+nav a:hover{color:var(--nv)}
+
+.container{max-width:1400px;margin:0 auto;padding:0 40px}
+section{padding:80px 0}
+.section-tag{display:inline-block;background:var(--nv-glow);color:var(--nv);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:5px 14px;border-radius:16px;margin-bottom:14px}
+.section-header{text-align:center;margin-bottom:48px}
+.section-header h2{font-size:34px;font-weight:700;margin-bottom:8px}
+.section-header p{color:var(--muted);font-size:15px;max-width:680px;margin:0 auto}
+
+.hero{padding:130px 0 80px;display:grid;grid-template-columns:1.2fr 1fr;gap:60px;align-items:center}
+.hero h1{font-size:44px;font-weight:800;line-height:1.1;margin-bottom:14px}
+.hero .green{color:var(--nv)}
+.hero .sub{font-size:18px;color:var(--muted);margin-bottom:20px;line-height:1.5}
+.hero-stats{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;text-align:center;transition:transform .3s,border-color .3s}
+.stat-card:hover{transform:translateY(-3px);border-color:var(--nv)}
+.stat-card .val{font-size:32px;font-weight:800}
+.stat-card .lbl{font-size:12px;color:var(--muted);margin-top:2px}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;transition:transform .3s,border-color .3s}
+.card:hover{transform:translateY(-3px);border-color:var(--nv)}
+.card h3{font-size:16px;font-weight:600;margin-bottom:4px}
+.card .subtitle{font-size:12px;color:var(--muted);margin-bottom:18px}
+.chart-wrap{position:relative;height:300px}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.mb{margin-bottom:20px}
+
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;transition:transform .3s,border-color .3s}
+.kpi:hover{transform:translateY(-3px);border-color:var(--nv)}
+.kpi .icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;margin-bottom:12px}
+.kpi .value{font-size:28px;font-weight:800;margin-bottom:2px}
+.kpi .label{font-size:12px;color:var(--muted)}
+.kpi .badge{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:600;margin-top:6px;padding:3px 8px;border-radius:12px}
+.badge.up{background:rgba(118,185,0,0.15);color:var(--nv)}
+.badge.warn{background:rgba(255,183,77,0.15);color:var(--orange)}
+.badge.down{background:rgba(239,83,80,0.15);color:var(--red)}
+
+.uc-header{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:36px 40px;margin-bottom:32px}
+.uc-header .uc-role{font-size:12px;color:var(--nv);font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.uc-header h2{font-size:28px;font-weight:700;margin-bottom:8px}
+.uc-header p{color:var(--muted);font-size:14px;line-height:1.6}
+
+.phase{display:flex;align-items:flex-start;gap:20px;margin-bottom:24px}
+.phase-num{min-width:40px;height:40px;border-radius:50%;background:var(--nv);color:var(--bg);font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.phase-content h4{font-size:15px;font-weight:600;margin-bottom:4px}
+.phase-content p{font-size:13px;color:var(--muted);line-height:1.6}
+
+.insight{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;transition:transform .3s,border-color .3s}
+.insight:hover{transform:translateY(-3px);border-color:var(--nv)}
+.insight .num{font-size:42px;font-weight:800;color:rgba(118,185,0,0.15);line-height:1;margin-bottom:10px}
+.insight h4{font-size:15px;font-weight:600;margin-bottom:6px}
+.insight p{font-size:13px;color:var(--muted);line-height:1.6}
+
+.skill-cat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px}
+.skill-cat h4{font-size:14px;font-weight:600;margin-bottom:14px;color:var(--nv)}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{background:var(--nv-glow);border:1px solid rgba(118,185,0,0.2);color:var(--text);padding:5px 12px;border-radius:16px;font-size:12px;font-weight:500}
+
+.flow{display:flex;align-items:center;justify-content:center;gap:0;margin:32px 0;flex-wrap:wrap}
+.flow-step{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px;text-align:center;min-width:140px}
+.flow-step .step-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.flow-step .step-sub{font-size:11px;color:var(--muted)}
+.flow-arrow{font-size:24px;color:var(--nv);padding:0 8px}
+
+.tableau-box{background:var(--card);border:2px dashed var(--nv);border-radius:16px;padding:40px;text-align:center;margin:40px 0}
+.tableau-box h3{font-size:22px;margin-bottom:10px}
+.tableau-box p{color:var(--muted);max-width:550px;margin:0 auto 16px}
+
+.data-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:12px}
+.data-table th{text-align:left;padding:10px 12px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);font-size:12px}
+.data-table td{padding:10px 12px;border-bottom:1px solid rgba(37,37,80,0.5)}
+.data-table tr:hover td{background:rgba(118,185,0,0.03)}
+.status-pass{color:var(--nv);font-weight:600}
+.status-warn{color:var(--orange);font-weight:600}
+.status-fail{color:var(--red);font-weight:600}
+
+.pbi-model{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:32px;margin-bottom:20px}
+.pbi-model h3{font-size:16px;font-weight:600;margin-bottom:4px}
+.pbi-model .subtitle{font-size:12px;color:var(--muted);margin-bottom:20px}
+.model-diagram{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-bottom:24px}
+.model-table{background:var(--bg);border:1px solid var(--border);border-radius:10px;min-width:180px;overflow:hidden}
+.model-table .mt-header{padding:10px 14px;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.model-table .mt-header.fact{background:rgba(118,185,0,0.2);color:var(--nv)}
+.model-table .mt-header.dim{background:rgba(79,195,247,0.15);color:var(--blue)}
+.model-table .mt-header.bridge{background:rgba(179,136,255,0.15);color:var(--purple)}
+.model-table ul{list-style:none;padding:8px 14px 12px;font-size:11px;color:var(--muted);line-height:1.8}
+.model-table ul li .key{color:var(--orange);font-weight:600}
+.model-table ul li .fk{color:var(--teal)}
+.model-rel{display:flex;align-items:center;font-size:20px;color:var(--border);padding:0 2px}
+.pbi-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(179,136,255,0.12);border:1px solid rgba(179,136,255,0.25);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--purple);font-weight:500;margin-right:8px;margin-bottom:8px}
+
+.divider{width:100%;height:1px;background:var(--border);margin:0}
+footer{text-align:center;padding:40px;border-top:1px solid var(--border);color:var(--muted);font-size:12px}
+
+@media(max-width:1024px){
+  .hero,.g2{grid-template-columns:1fr}
+  .g3{grid-template-columns:1fr 1fr}
+  .g4{grid-template-columns:1fr 1fr}
+  nav ul{display:none}
+}
+@media(max-width:640px){
+  .hero h1{font-size:28px}
+  .g3,.g4{grid-template-columns:1fr}
+  .flow{flex-direction:column}
+  .flow-arrow{transform:rotate(90deg)}
+}
+
+.code-toggle{display:inline-flex;align-items:center;gap:6px;background:rgba(118,185,0,0.1);border:1px solid rgba(118,185,0,0.25);color:var(--nv);font-size:12px;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;transition:all .3s;margin-top:16px}
+.code-toggle:hover{background:rgba(118,185,0,0.2);border-color:var(--nv)}
+.code-toggle .arrow{transition:transform .3s;font-size:10px}
+.code-toggle.open .arrow{transform:rotate(90deg)}
+.code-panel{max-height:0;overflow:hidden;transition:max-height .4s ease;margin-top:0}
+.code-panel.open{max-height:20000px;margin-top:12px}
+.code-panel pre{background:#0d0d1a;border:1px solid var(--border);border-radius:10px;padding:20px;overflow-x:auto;font-size:12px;line-height:1.6;color:#c8c8e0;font-family:'Fira Code','Consolas','Monaco',monospace;margin:0}
+.code-filename{display:inline-block;background:var(--bg);border:1px solid var(--border);border-radius:6px 6px 0 0;padding:4px 12px;font-size:11px;color:var(--muted);font-family:monospace;margin-bottom:-1px;position:relative;z-index:1}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">MICHELLE CHAN <span>| Revenue Analytics</span></div>
+  <ul>
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#case">Business Case</a></li>
+    <li><a href="#semantic">Semantic Model</a></li>
+    <li><a href="#impact">Impact</a></li>
+    <li><a href="#dashboard">Dashboard</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="container">
+<div class="hero" id="overview">
+  <div>
+    <h1>Revenue Analytics <span class="green">Business Case</span></h1>
+    <p class="sub">An end-to-end case study showing how I diagnosed revenue discrepancies across CRM and ERP systems, then built a governed BI pipeline with a semantic layer that Finance, Sales, and FP&amp;A all trust.</p>
+  </div>
+  <div class="hero-stats">
+    <div class="stat-card"><div class="val" style="color:var(--nv)">$215.9B</div><div class="lbl">NVIDIA FY2026 Revenue</div></div>
+    <div class="stat-card"><div class="val" style="color:var(--blue)">500</div><div class="lbl">CRM Deals Modeled</div></div>
+    <div class="stat-card"><div class="val" style="color:var(--purple)">89.1%</div><div class="lbl">Reconciliation Match Rate</div></div>
+    <div class="stat-card"><div class="val" style="color:var(--orange)">$55.9M</div><div class="lbl">Revenue Variance Identified</div></div>
+  </div>
+</div>
+</div>
+
+<div class="divider"></div>
+
+<!-- UNIFIED BUSINESS CASE -->
+<section id="case">
+<div class="container">
+
+  <div class="uc-header">
+    <div class="uc-role">Business Case</div>
+    <h2>From Revenue Discrepancy to Trusted Single Source of Truth</h2>
+    <p>Revenue data lives across Salesforce (CRM bookings) and SAP S/4HANA (billing, revenue recognition). When these systems disagree, Finance loses confidence, executives get inconsistent answers, and planning cycles slow down. Meanwhile, integrations between SAP and third-party systems break silently and errors reach dashboards before anyone catches them. This case demonstrates how I diagnosed the problem, built the data infrastructure to fix it, and delivered a governed reporting layer that the entire Finance organization trusts.</p>
+  </div>
+
+  <!-- Phase 1: Diagnose the Gap -->
+  <div class="phase"><div class="phase-num">1</div><div class="phase-content"><h4>Phase 1: Diagnose the Gap</h4><p>Modeled 500 CRM opportunities against SAP billing documents. Found that 10.9% of closed-won deals have discrepancies including timing differences, unbilled backlog, amount variances, and customer mapping gaps totaling $55.9M in unreconciled revenue.</p></div></div>
+
+  <div class="g4 mb">
+    <div class="kpi">
+      <div class="icon" style="background:var(--nv-glow)">$</div>
+      <div class="value" style="color:var(--nv)">$824M</div>
+      <div class="label">CRM Closed-Won Revenue</div>
+    </div>
+    <div class="kpi">
+      <div class="icon" style="background:rgba(79,195,247,0.15)">$</div>
+      <div class="value" style="color:var(--blue)">$768M</div>
+      <div class="label">SAP Billed Revenue</div>
+    </div>
+    <div class="kpi">
+      <div class="icon" style="background:rgba(239,83,80,0.15)">!</div>
+      <div class="value" style="color:var(--red)">$55.9M</div>
+      <div class="label">Unreconciled Variance</div>
+      <div class="badge warn">6.8% gap</div>
+    </div>
+    <div class="kpi">
+      <div class="icon" style="background:rgba(255,183,77,0.15)">#</div>
+      <div class="value" style="color:var(--orange)">86</div>
+      <div class="label">Discrepancies Identified</div>
+      <div class="badge down">35 unbilled</div>
+    </div>
+  </div>
+
+  <div class="g2 mb">
+    <div class="card">
+      <h3>Discrepancy Type Distribution</h3>
+      <p class="subtitle">Root cause breakdown of CRM vs SAP mismatches</p>
+      <div class="chart-wrap"><canvas id="discrepancyChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Revenue by Fiscal Quarter</h3>
+      <p class="subtitle">CRM bookings vs SAP billing by quarter ($M)</p>
+      <div class="chart-wrap"><canvas id="quarterChart"></canvas></div>
+    </div>
+  </div>
+
+  <button class="code-toggle" onclick="toggleCode('code-datagen')"><span class="arrow">&#9654;</span> View Source: generate_synthetic_data.py</button>
+<div class="code-panel" id="code-datagen">
+<span class="code-filename">generate_synthetic_data.py</span>
+<pre><code>import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+import random
+import os
+
+np.random.seed(42)
+random.seed(42)
+
+OUTPUT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+NVIDIA_PRODUCTS = {
+    &#x27;GPU-DC-H100&#x27;: {&#x27;category&#x27;: &#x27;Data Center&#x27;, &#x27;base_price&#x27;: 30000, &#x27;price_var&#x27;: 5000},
+    &#x27;GPU-DC-A100&#x27;: {&#x27;category&#x27;: &#x27;Data Center&#x27;, &#x27;base_price&#x27;: 15000, &#x27;price_var&#x27;: 3000},
+    &#x27;GPU-DC-H200&#x27;: {&#x27;category&#x27;: &#x27;Data Center&#x27;, &#x27;base_price&#x27;: 40000, &#x27;price_var&#x27;: 8000},
+    &#x27;GPU-DC-B200&#x27;: {&#x27;category&#x27;: &#x27;Data Center&#x27;, &#x27;base_price&#x27;: 45000, &#x27;price_var&#x27;: 10000},
+    &#x27;GPU-GM-4090&#x27;: {&#x27;category&#x27;: &#x27;Gaming&#x27;, &#x27;base_price&#x27;: 1599, &#x27;price_var&#x27;: 200},
+    &#x27;GPU-GM-4080&#x27;: {&#x27;category&#x27;: &#x27;Gaming&#x27;, &#x27;base_price&#x27;: 999, &#x27;price_var&#x27;: 100},
+    &#x27;GPU-GM-5090&#x27;: {&#x27;category&#x27;: &#x27;Gaming&#x27;, &#x27;base_price&#x27;: 1999, &#x27;price_var&#x27;: 300},
+    &#x27;GPU-PV-A6000&#x27;: {&#x27;category&#x27;: &#x27;Professional Visualization&#x27;, &#x27;base_price&#x27;: 6800, &#x27;price_var&#x27;: 800},
+    &#x27;GPU-PV-L40S&#x27;: {&#x27;category&#x27;: &#x27;Professional Visualization&#x27;, &#x27;base_price&#x27;: 8500, &#x27;price_var&#x27;: 1000},
+    &#x27;GPU-AU-ORIN&#x27;: {&#x27;category&#x27;: &#x27;Automotive&#x27;, &#x27;base_price&#x27;: 500, &#x27;price_var&#x27;: 100},
+    &#x27;GPU-AU-THOR&#x27;: {&#x27;category&#x27;: &#x27;Automotive&#x27;, &#x27;base_price&#x27;: 800, &#x27;price_var&#x27;: 150},
+    &#x27;SW-AI-ENT&#x27;: {&#x27;category&#x27;: &#x27;Data Center&#x27;, &#x27;base_price&#x27;: 4500, &#x27;price_var&#x27;: 500},
+    &#x27;SW-OMNI-LIC&#x27;: {&#x27;category&#x27;: &#x27;Professional Visualization&#x27;, &#x27;base_price&#x27;: 1000, &#x27;price_var&#x27;: 200},
+}
+
+CUSTOMERS = [
+    {&#x27;sfdc_id&#x27;: &#x27;SF-001&#x27;, &#x27;sap_id&#x27;: &#x27;SAP-10001&#x27;, &#x27;name&#x27;: &#x27;Hyperion Cloud Services&#x27;, &#x27;region&#x27;: &#x27;US-West&#x27;, &#x27;segment&#x27;: &#x27;Cloud CSP&#x27;, &#x27;tier&#x27;: &#x27;Enterprise&#x27;},
+    {&#x27;sfdc_id&#x27;: &#x27;SF-002&#x27;, &#x27;sap_id&#x27;: &#x27;SAP-10002&#x27;, &#x27;name&#x27;: &#x27;Pinnacle AI Labs&#x27;, &#x27;region&#x27;: &#x27;US-East&#x27;, &#x27;segment&#x27;: &#x27;AI/ML Startup&#x27;, &#x27;tier&#x27;: &#x27;Growth&#x27;},
+    {&#x27;sfdc_id&#x27;: &#x27;SF-003&#x27;, &#x27;sap_id&#x27;: &#x27;SAP-10003&#x27;, &#x27;name&#x27;: &#x27;Atlas Data Corp&#x27;, &#x27;region&#x27;: &#x27;US-West&#x27;, &#x27;segment&#x27;: &#x27;Enterprise IT&#x27;, &#x27;tier&#x27;: &#x27;Enterprise&#x27;},
+    {&#x27;sfdc_id&#x27;: &#x27;SF-004&#x27;, &#x27;sap_id&#x27;: &#x27;SAP-10004&#x27;, &#x27;name&#x27;: &#x27;Orion Semiconductor&#x27;, &#x27;region&#x27;: &#x27;APAC&#x27;, &#x27;segment&#x27;: &#x27;OEM&#x27;, &#x27;tier&#x27;: &#x27;Strategic&#x27;},
+    {&#x27;sfdc_id&#x27;: &#x27;SF-005&#x27;, &#x27;sap_id&#x27;: &#x27;SAP-10005&#x27;, &#x27;name&#x27;: &#x27;Vanguard Autonomous&#x27;, &#x27;region&#x27;: &#x27;EU&#x27;, &#x27;segment&#x27;: &#x27;Automotive&#x27;, &#x27;tier&#x27;: &#x27;Growth&#x27;},
+    {&#x27;sfdc_id&#x27;: &#x27;SF-006&#x27;, &#x27;sap_id&#x27;: &#x27;SAP-10006&#x27;, &#x27;name&#x27;: &#x27;Meridian Research Institute&#x27;, &#x27;region&#x27;: &#x27;US-East&#x27;, &#x27;segment&#x27;: &#x27;Public Sector&#x27;, &#x27;tier&#x27;: &#x27;Standard&#x27;},
+    {&#x27;sfdc_id&#x27;: &#x27;SF-007&#x27;, &#x27;sap_id&#x27;: &#x27;SAP-10007&#x27;, &#x27;name&#x27;: &#x27;Nexus Gaming Corp&#x27;, &#x27;region&#x27;: &#x27;US-West&#x27;, &#x27;segment&#x27;: &#x27;Gaming/Consumer&#x27;, &#x27;tier&#x27;: &#x27;Enterprise&#x27;},
+    {&#x27;sfdc_id&#x27;: &#x27;SF-008&#x27;, &#x27;sap_id&#x27;: &#x27;SAP-10008&#x27;, &#x27;name&#x27;: &#x27;Stellar Health Systems&#x27;, &#x27;region&#x27;: &#x27;US-East&#x27;, &#x27;segment&#x27;: &#x27;Healthcare&#x27;, &#x27;tier&#x27;: &#x27;Growth&#x27;},
+    {&#x27;sfdc_id&#x27;: &#x27;SF-009&#x27;, &#x27;sap_id&#x27;: &#x27;SAP-10009&#x27;, &#x27;name&#x27;: &#x27;Titan Manufacturing AG&#x27;, &#x27;region&#x27;: &#x27;EU&#x27;, &#x27;segment&#x27;: &#x27;Industrial&#x27;, &#x27;tier&#x27;: &#x27;Enterprise&#x27;},
+    {&#x27;sfdc_id&#x27;: &#x27;SF-010&#x27;, &#x27;sap_id&#x27;: &#x27;SAP-10010&#x27;, &#x27;name&#x27;: &#x27;Pacific Telecom Ltd&#x27;, &#x27;region&#x27;: &#x27;APAC&#x27;, &#x27;segment&#x27;: &#x27;Telecom&#x27;, &#x27;tier&#x27;: &#x27;Strategic&#x27;},
+    {&#x27;sfdc_id&#x27;: &#x27;SF-011&#x27;, &#x27;sap_id&#x27;: &#x27;SAP-10011&#x27;, &#x27;name&#x27;: &#x27;Summit Financial Group&#x27;, &#x27;region&#x27;: &#x27;US-East&#x27;, &#x27;segment&#x27;: &#x27;Financial Services&#x27;, &#x27;tier&#x27;: &#x27;Enterprise&#x27;},
+    {&#x27;sfdc_id&#x27;: &#x27;SF-012&#x27;, &#x27;sap_id&#x27;: &#x27;SAP-10012&#x27;, &#x27;name&#x27;: &#x27;Quantum Compute Inc&#x27;, &#x27;region&#x27;: &#x27;US-West&#x27;, &#x27;segment&#x27;: &#x27;Cloud CSP&#x27;, &#x27;tier&#x27;: &#x27;Strategic&#x27;},
+    {&#x27;sfdc_id&#x27;: &#x27;SF-013&#x27;, &#x27;sap_id&#x27;: &#x27;SAP-10013A&#x27;, &#x27;name&#x27;: &#x27;Aurora Dynamics&#x27;, &#x27;region&#x27;: &#x27;EU&#x27;, &#x27;segment&#x27;: &#x27;Automotive&#x27;, &#x27;tier&#x27;: &#x27;Growth&#x27;},
+    {&#x27;sfdc_id&#x27;: &#x27;SF-014&#x27;, &#x27;sap_id&#x27;: None, &#x27;name&#x27;: &#x27;Cobalt AI (Acquired)&#x27;, &#x27;region&#x27;: &#x27;US-West&#x27;, &#x27;segment&#x27;: &#x27;AI/ML Startup&#x27;, &#x27;tier&#x27;: &#x27;Growth&#x27;},
+    {&#x27;sfdc_id&#x27;: &#x27;SF-015&#x27;, &#x27;sap_id&#x27;: &#x27;SAP-10015&#x27;, &#x27;name&#x27;: &#x27;Zenith Robotics&#x27;, &#x27;region&#x27;: &#x27;APAC&#x27;, &#x27;segment&#x27;: &#x27;Industrial&#x27;, &#x27;tier&#x27;: &#x27;Standard&#x27;},
+]
+
+SALES_REPS = [&#x27;J. Martinez&#x27;, &#x27;S. Patel&#x27;, &#x27;R. Kim&#x27;, &#x27;A. Thompson&#x27;, &#x27;M. Chen&#x27;, &#x27;L. Nakamura&#x27;, &#x27;D. Okafor&#x27;, &#x27;E. Johansson&#x27;]
+
+START_DATE = datetime(2024, 10, 1)
+END_DATE = datetime(2026, 1, 31)
+
+def get_nvidia_fiscal_quarter(dt):
+    if isinstance(dt, str):
+        dt = datetime.strptime(dt, &#x27;%Y-%m-%d&#x27;)
+    month, year = dt.month, dt.year
+    if 2 &lt;= month &lt;= 4:
+        return f&#x27;Q1 FY{year + 1}&#x27;
+    elif 5 &lt;= month &lt;= 7:
+        return f&#x27;Q2 FY{year + 1}&#x27;
+    elif 8 &lt;= month &lt;= 10:
+        return f&#x27;Q3 FY{year + 1}&#x27;
+    else:
+        fy = year + 1 if month &gt;= 11 else year
+        return f&#x27;Q4 FY{fy}&#x27;
+
+def generate_crm_opportunities(n=500):
+    records = []
+    for i in range(n):
+        cust = random.choice(CUSTOMERS)
+        product_sku = random.choice(list(NVIDIA_PRODUCTS.keys()))
+        product = NVIDIA_PRODUCTS[product_sku]
+
+        close_date = START_DATE + timedelta(days=random.randint(0, (END_DATE - START_DATE).days))
+        create_date = close_date - timedelta(days=random.randint(30, 180))
+
+        if product[&#x27;category&#x27;] == &#x27;Data Center&#x27;:
+            qty = random.choice([8, 16, 32, 64, 128, 256, 512, 1024]) if cust[&#x27;tier&#x27;] in [&#x27;Strategic&#x27;, &#x27;Enterprise&#x27;] else random.choice([8, 16, 32, 64])
+        elif product[&#x27;category&#x27;] == &#x27;Gaming&#x27;:
+            qty = random.randint(100, 10000)
+        elif product[&#x27;category&#x27;] == &#x27;Automotive&#x27;:
+            qty = random.randint(50, 500)
+        else:
+            qty = random.randint(5, 100)
+
+        unit_price = product[&#x27;base_price&#x27;] + random.uniform(-product[&#x27;price_var&#x27;], product[&#x27;price_var&#x27;])
+        tcv = round(qty * unit_price, 2)
+
+        stage_roll = random.random()
+        if stage_roll &lt; 0.65:
+            stage = &#x27;Closed Won&#x27;
+        elif stage_roll &lt; 0.80:
+            stage = &#x27;Closed Lost&#x27;
+        elif stage_roll &lt; 0.90:
+            stage = &#x27;Negotiation&#x27;
+        else:
+            stage = &#x27;Qualification&#x27;
+
+        discount_pct = 0
+        if tcv &gt; 5_000_000:
+            discount_pct = random.uniform(0.05, 0.20)
+        elif tcv &gt; 1_000_000:
+            discount_pct = random.uniform(0.02, 0.10)
+
+        net_amount = round(tcv * (1 - discount_pct), 2)
+
+        records.append({
+            &#x27;opportunity_id&#x27;: f&#x27;OPP-{10000 + i}&#x27;,
+            &#x27;sfdc_account_id&#x27;: cust[&#x27;sfdc_id&#x27;],
+            &#x27;account_name&#x27;: cust[&#x27;name&#x27;],
+            &#x27;region&#x27;: cust[&#x27;region&#x27;],
+            &#x27;customer_segment&#x27;: cust[&#x27;segment&#x27;],
+            &#x27;product_sku&#x27;: product_sku,
+            &#x27;product_category&#x27;: product[&#x27;category&#x27;],
+            &#x27;quantity&#x27;: qty,
+            &#x27;unit_price_usd&#x27;: round(unit_price, 2),
+            &#x27;total_contract_value_usd&#x27;: tcv,
+            &#x27;discount_pct&#x27;: round(discount_pct, 4),
+            &#x27;net_booking_amount_usd&#x27;: net_amount,
+            &#x27;stage&#x27;: stage,
+            &#x27;close_date&#x27;: close_date.strftime(&#x27;%Y-%m-%d&#x27;),
+            &#x27;created_date&#x27;: create_date.strftime(&#x27;%Y-%m-%d&#x27;),
+            &#x27;fiscal_quarter&#x27;: get_nvidia_fiscal_quarter(close_date),
+            &#x27;sales_rep&#x27;: random.choice(SALES_REPS),
+            &#x27;deal_type&#x27;: random.choice([&#x27;New&#x27;, &#x27;Expansion&#x27;, &#x27;Renewal&#x27;]),
+        })
+    return pd.DataFrame(records)
+
+def generate_sap_billing(crm_df):
+    closed_won = crm_df[crm_df[&#x27;stage&#x27;] == &#x27;Closed Won&#x27;].copy()
+    billing_records = []
+    discrepancy_log = []
+
+    for _, deal in closed_won.iterrows():
+        cust_match = [c for c in CUSTOMERS if c[&#x27;sfdc_id&#x27;] == deal[&#x27;sfdc_account_id&#x27;]]
+        sap_id = cust_match[0][&#x27;sap_id&#x27;] if cust_match and cust_match[0][&#x27;sap_id&#x27;] else None
+
+        if sap_id is None:
+            discrepancy_log.append({
+                &#x27;opportunity_id&#x27;: deal[&#x27;opportunity_id&#x27;],
+                &#x27;type&#x27;: &#x27;MISSING_SAP_MAPPING&#x27;,
+                &#x27;detail&#x27;: f&quot;No SAP customer ID for SFDC {deal[&#x27;sfdc_account_id&#x27;]}&quot;
+            })
+            continue
+
+        close_dt = datetime.strptime(deal[&#x27;close_date&#x27;], &#x27;%Y-%m-%d&#x27;)
+
+        # 12% timing differences
+        if random.random() &lt; 0.12:
+            billing_date = close_dt + timedelta(days=random.randint(5, 45))
+            discrepancy_log.append({
+                &#x27;opportunity_id&#x27;: deal[&#x27;opportunity_id&#x27;],
+                &#x27;type&#x27;: &#x27;TIMING_DIFFERENCE&#x27;,
+                &#x27;detail&#x27;: f&quot;Billing {(billing_date - close_dt).days} days after CRM close&quot;
+            })
+        else:
+            billing_date = close_dt + timedelta(days=random.randint(0, 3))
+
+        # 8% split billing on large deals
+        if deal[&#x27;net_booking_amount_usd&#x27;] &gt; 2_000_000 and random.random() &lt; 0.08:
+            splits = random.choice([2, 3])
+            amounts = np.random.dirichlet(np.ones(splits)) * deal[&#x27;net_booking_amount_usd&#x27;]
+            for s in range(splits):
+                bill_date = billing_date + timedelta(days=s * random.randint(15, 45))
+                billing_records.append({
+                    &#x27;billing_doc_id&#x27;: f&#x27;SAP-BD-{random.randint(100000, 999999)}&#x27;,
+                    &#x27;sap_customer_id&#x27;: sap_id,
+                    &#x27;sales_order_ref&#x27;: deal[&#x27;opportunity_id&#x27;],
+                    &#x27;product_sku&#x27;: deal[&#x27;product_sku&#x27;],
+                    &#x27;billing_date&#x27;: bill_date.strftime(&#x27;%Y-%m-%d&#x27;),
+                    &#x27;fiscal_period&#x27;: get_nvidia_fiscal_quarter(bill_date),
+                    &#x27;billed_quantity&#x27;: deal[&#x27;quantity&#x27;] // splits,
+                    &#x27;billed_amount_usd&#x27;: round(amounts[s], 2),
+                    &#x27;revenue_type&#x27;: &#x27;PRODUCT&#x27; if s == 0 else &#x27;DEFERRED&#x27;,
+                    &#x27;posting_status&#x27;: &#x27;POSTED&#x27;,
+                    &#x27;plant_code&#x27;: random.choice([&#x27;P100&#x27;, &#x27;P200&#x27;, &#x27;P300&#x27;]),
+                    &#x27;company_code&#x27;: &#x27;1000&#x27;,
+                })
+            discrepancy_log.append({
+                &#x27;opportunity_id&#x27;: deal[&#x27;opportunity_id&#x27;],
+                &#x27;type&#x27;: &#x27;SPLIT_BILLING&#x27;,
+                &#x27;detail&#x27;: f&quot;Deal split into {splits} billing documents&quot;
+            })
+            continue
+
+        # 5% amount variances
+        amount_variance = 0
+        if random.random() &lt; 0.05:
+            amount_variance = random.uniform(-500, 500)
+            discrepancy_log.append({
+                &#x27;opportunity_id&#x27;: deal[&#x27;opportunity_id&#x27;],
+                &#x27;type&#x27;: &#x27;AMOUNT_VARIANCE&#x27;,
+                &#x27;detail&#x27;: f&quot;SAP amount differs by ${amount_variance:.2f}&quot;
+            })
+
+        # 3% unbilled backlog
+        if random.random() &lt; 0.03:
+            discrepancy_log.append({
+                &#x27;opportunity_id&#x27;: deal[&#x27;opportunity_id&#x27;],
+                &#x27;type&#x27;: &#x27;UNBILLED&#x27;,
+                &#x27;detail&#x27;: &#x27;Deal closed in CRM but not yet billed in SAP&#x27;
+            })
+            continue
+
+        billing_records.append({
+            &#x27;billing_doc_id&#x27;: f&#x27;SAP-BD-{random.randint(100000, 999999)}&#x27;,
+            &#x27;sap_customer_id&#x27;: sap_id,
+            &#x27;sales_order_ref&#x27;: deal[&#x27;opportunity_id&#x27;],
+            &#x27;product_sku&#x27;: deal[&#x27;product_sku&#x27;],
+            &#x27;billing_date&#x27;: billing_date.strftime(&#x27;%Y-%m-%d&#x27;),
+            &#x27;fiscal_period&#x27;: get_nvidia_fiscal_quarter(billing_date),
+            &#x27;billed_quantity&#x27;: deal[&#x27;quantity&#x27;],
+            &#x27;billed_amount_usd&#x27;: round(deal[&#x27;net_booking_amount_usd&#x27;] + amount_variance, 2),
+            &#x27;revenue_type&#x27;: &#x27;PRODUCT&#x27;,
+            &#x27;posting_status&#x27;: &#x27;POSTED&#x27;,
+            &#x27;plant_code&#x27;: random.choice([&#x27;P100&#x27;, &#x27;P200&#x27;, &#x27;P300&#x27;]),
+            &#x27;company_code&#x27;: &#x27;1000&#x27;,
+        })
+
+    return pd.DataFrame(billing_records), pd.DataFrame(discrepancy_log)
+
+def generate_customer_master():
+    records = []
+    for c in CUSTOMERS:
+        records.append({
+            &#x27;sfdc_account_id&#x27;: c[&#x27;sfdc_id&#x27;],
+            &#x27;sap_customer_id&#x27;: c[&#x27;sap_id&#x27;] if c[&#x27;sap_id&#x27;] else &#x27;UNMAPPED&#x27;,
+            &#x27;customer_name&#x27;: c[&#x27;name&#x27;],
+            &#x27;region&#x27;: c[&#x27;region&#x27;],
+            &#x27;customer_segment&#x27;: c[&#x27;segment&#x27;],
+            &#x27;tier&#x27;: c[&#x27;tier&#x27;],
+            &#x27;mapping_status&#x27;: &#x27;ACTIVE&#x27; if c[&#x27;sap_id&#x27;] else &#x27;PENDING_MAPPING&#x27;,
+            &#x27;last_validated&#x27;: &#x27;2025-12-15&#x27; if c[&#x27;sap_id&#x27;] else None,
+            &#x27;data_steward&#x27;: random.choice([&#x27;Finance Ops&#x27;, &#x27;Sales Ops&#x27;, &#x27;Revenue Accounting&#x27;]),
+        })
+    return pd.DataFrame(records)
+
+if __name__ == &#x27;__main__&#x27;:
+    crm_df = generate_crm_opportunities(500)
+    sap_df, discrepancy_df = generate_sap_billing(crm_df)
+    customer_master_df = generate_customer_master()
+
+    data_dir = os.path.join(OUTPUT_DIR, &#x27;data&#x27;)
+    crm_df.to_csv(os.path.join(data_dir, &#x27;crm_opportunities.csv&#x27;), index=False)
+    sap_df.to_csv(os.path.join(data_dir, &#x27;sap_billing.csv&#x27;), index=False)
+    customer_master_df.to_csv(os.path.join(data_dir, &#x27;customer_master.csv&#x27;), index=False)
+    discrepancy_df.to_csv(os.path.join(data_dir, &#x27;discrepancy_log.csv&#x27;), index=False)
+
+    print(f&quot;CRM Opportunities: {len(crm_df)} records&quot;)
+    print(f&quot;SAP Billing Docs:  {len(sap_df)} records&quot;)
+    print(f&quot;Discrepancies:     {len(discrepancy_df)}&quot;)</code></pre>
+</div>
+
+  <!-- Phase 2: Data Model + Customer Master -->
+  <div class="phase"><div class="phase-num">2</div><div class="phase-content"><h4>Phase 2: Data Model and Customer Master Governance</h4><p>Designed a star schema with a customer master reconciliation layer mapping Salesforce Account IDs to SAP customer numbers. This is the governance asset, not just a lookup table, that ensures every report pulls from a single, validated customer identity.</p></div></div>
+
+  <div class="card mb">
+    <h3>Customer Master: Reconciliation Status</h3>
+    <p class="subtitle">15 customers modeled with SFDC Account ID to SAP Customer Number mapping</p>
+    <table class="data-table">
+      <thead><tr><th>Customer</th><th>SFDC ID</th><th>SAP ID</th><th>Segment</th><th>Region</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Hyperion Cloud Services</td><td>SF-001</td><td>SAP-10001</td><td>Cloud CSP</td><td>US-West</td><td class="status-pass">ACTIVE</td></tr>
+        <tr><td>Atlas Data Corp</td><td>SF-003</td><td>SAP-10003</td><td>Enterprise IT</td><td>US-West</td><td class="status-pass">ACTIVE</td></tr>
+        <tr><td>Quantum Compute Inc</td><td>SF-012</td><td>SAP-10012</td><td>Cloud CSP</td><td>US-West</td><td class="status-pass">ACTIVE</td></tr>
+        <tr><td>Aurora Dynamics</td><td>SF-013</td><td>SAP-10013A</td><td>Automotive</td><td>EU</td><td class="status-warn">VARIANT ID</td></tr>
+        <tr><td>Cobalt AI (Acquired)</td><td>SF-014</td><td>N/A</td><td>AI/ML Startup</td><td>US-West</td><td class="status-fail">UNMAPPED</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <button class="code-toggle" onclick="toggleCode('code-schema')"><span class="arrow">&#9654;</span> View Source: 01_star_schema_ddl.sql</button>
+<div class="code-panel" id="code-schema">
+<span class="code-filename">01_star_schema_ddl.sql</span>
+<pre><code>CREATE TABLE dim_customer (
+    customer_key        INT PRIMARY KEY AUTO_INCREMENT,
+    sfdc_account_id     VARCHAR(20) UNIQUE,
+    sap_customer_id     VARCHAR(20),
+    customer_name       VARCHAR(200) NOT NULL,
+    region              VARCHAR(50),
+    customer_segment    VARCHAR(100),
+    tier                VARCHAR(20),
+    mapping_status      VARCHAR(20) DEFAULT &#x27;PENDING_MAPPING&#x27;,
+    last_validated_date DATE,
+    data_steward        VARCHAR(100),
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE dim_product (
+    product_key         INT PRIMARY KEY AUTO_INCREMENT,
+    product_sku         VARCHAR(30) UNIQUE NOT NULL,
+    product_name        VARCHAR(200),
+    product_category    VARCHAR(100) NOT NULL,
+    base_price_usd      DECIMAL(12,2),
+    is_active           BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE dim_time (
+    time_key            INT PRIMARY KEY,
+    calendar_date       DATE UNIQUE NOT NULL,
+    calendar_year       INT,
+    calendar_quarter    VARCHAR(6),
+    calendar_month      INT,
+    nvidia_fiscal_year  INT,
+    nvidia_fiscal_quarter VARCHAR(10),
+    month_name          VARCHAR(20),
+    is_quarter_end      BOOLEAN,
+    is_fiscal_year_end  BOOLEAN
+);
+
+CREATE TABLE dim_region (
+    region_key          INT PRIMARY KEY AUTO_INCREMENT,
+    region_code         VARCHAR(20) UNIQUE NOT NULL,
+    region_name         VARCHAR(100),
+    geography           VARCHAR(50)
+);
+
+CREATE TABLE dim_sales_rep (
+    sales_rep_key       INT PRIMARY KEY AUTO_INCREMENT,
+    rep_name            VARCHAR(200),
+    team                VARCHAR(100),
+    territory           VARCHAR(100)
+);
+
+CREATE TABLE fact_crm_bookings (
+    booking_key         INT PRIMARY KEY AUTO_INCREMENT,
+    opportunity_id      VARCHAR(30) UNIQUE NOT NULL,
+    customer_key        INT NOT NULL REFERENCES dim_customer(customer_key),
+    product_key         INT NOT NULL REFERENCES dim_product(product_key),
+    time_key            INT NOT NULL REFERENCES dim_time(time_key),
+    sales_rep_key       INT REFERENCES dim_sales_rep(sales_rep_key),
+    quantity            INT,
+    unit_price_usd      DECIMAL(12,2),
+    total_contract_value DECIMAL(15,2),
+    discount_pct        DECIMAL(5,4),
+    net_booking_amount  DECIMAL(15,2),
+    stage               VARCHAR(30),
+    deal_type           VARCHAR(20),
+    source_system       VARCHAR(20) DEFAULT &#x27;SFDC&#x27;,
+    loaded_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE fact_sap_billing (
+    billing_key         INT PRIMARY KEY AUTO_INCREMENT,
+    billing_doc_id      VARCHAR(30) UNIQUE NOT NULL,
+    customer_key        INT NOT NULL REFERENCES dim_customer(customer_key),
+    product_key         INT NOT NULL REFERENCES dim_product(product_key),
+    time_key            INT NOT NULL REFERENCES dim_time(time_key),
+    sales_order_ref     VARCHAR(30),
+    billed_quantity     INT,
+    billed_amount_usd   DECIMAL(15,2),
+    revenue_type        VARCHAR(30),
+    posting_status      VARCHAR(20),
+    plant_code          VARCHAR(10),
+    company_code        VARCHAR(10),
+    source_system       VARCHAR(20) DEFAULT &#x27;SAP&#x27;,
+    loaded_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE fact_reconciliation (
+    recon_key           INT PRIMARY KEY AUTO_INCREMENT,
+    opportunity_id      VARCHAR(30),
+    billing_doc_id      VARCHAR(30),
+    customer_key        INT REFERENCES dim_customer(customer_key),
+    recon_date          DATE NOT NULL,
+    crm_amount          DECIMAL(15,2),
+    sap_amount          DECIMAL(15,2),
+    variance_amount     DECIMAL(15,2),
+    variance_pct        DECIMAL(8,4),
+    discrepancy_type    VARCHAR(50),
+    resolution_status   VARCHAR(30) DEFAULT &#x27;OPEN&#x27;,
+    resolved_date       DATE,
+    resolved_by         VARCHAR(100)
+);
+
+CREATE INDEX idx_crm_bookings_customer ON fact_crm_bookings(customer_key);
+CREATE INDEX idx_crm_bookings_time ON fact_crm_bookings(time_key);
+CREATE INDEX idx_crm_bookings_stage ON fact_crm_bookings(stage);
+CREATE INDEX idx_sap_billing_customer ON fact_sap_billing(customer_key);
+CREATE INDEX idx_sap_billing_time ON fact_sap_billing(time_key);
+CREATE INDEX idx_recon_status ON fact_reconciliation(resolution_status);
+CREATE INDEX idx_customer_mapping ON dim_customer(sfdc_account_id, sap_customer_id);</code></pre>
+</div>
+
+  <!-- Phase 3: End-to-End Pipeline Architecture -->
+  <div class="phase"><div class="phase-num">3</div><div class="phase-content"><h4>Phase 3: End-to-End BI Pipeline Architecture</h4><p>Designed the full data flow from source systems through transformation to reporting, covering every layer from data ingestion to dashboard delivery. The architecture handles both real-time integration health monitoring and batch analytical processing, with a quality gate that halts bad data before it reaches any report.</p></div></div>
+
+  <div class="flow">
+    <div class="flow-step"><div class="step-title">Salesforce CRM</div><div class="step-sub">Opportunities, Accounts</div></div>
+    <div class="flow-arrow">&#10142;</div>
+    <div class="flow-step" style="border-color:var(--nv)"><div class="step-title" style="color:var(--nv)">Customer Master</div><div class="step-sub">SFDC / SAP Mapping</div></div>
+    <div class="flow-arrow">&#10142;</div>
+    <div class="flow-step"><div class="step-title">SAP S/4HANA</div><div class="step-sub">Billing, Rev Rec</div></div>
+    <div class="flow-arrow">&#10142;</div>
+    <div class="flow-step"><div class="step-title">ELT (dbt)</div><div class="step-sub">Transform + Test</div></div>
+    <div class="flow-arrow">&#10142;</div>
+    <div class="flow-step" style="border-color:var(--red)"><div class="step-title" style="color:var(--red)">Quality Gate</div><div class="step-sub">7 validation checks</div></div>
+    <div class="flow-arrow">&#10142;</div>
+    <div class="flow-step" style="border-color:var(--purple)"><div class="step-title" style="color:var(--purple)">Semantic Layer</div><div class="step-sub">Canonical Metrics</div></div>
+    <div class="flow-arrow">&#10142;</div>
+    <div class="flow-step"><div class="step-title">Tableau</div><div class="step-sub">Dashboards</div></div>
+  </div>
+
+  <!-- Phase 4: Data Quality Framework -->
+  <div class="phase"><div class="phase-num">4</div><div class="phase-content"><h4>Phase 4: Data Quality Framework</h4><p>Built a 7-check automated validation suite: referential integrity, null rate thresholds, row count variance, value range, CRM-to-SAP reconciliation, duplicate detection, and data freshness monitoring. When a test fails, the pipeline halts and a discrepancy log is written before bad data reaches any dashboard.</p></div></div>
+
+  <div class="g2 mb">
+    <div class="card">
+      <h3>Data Quality Check Results</h3>
+      <p class="subtitle">Automated validation suite that runs daily in the ETL pipeline</p>
+      <table class="data-table">
+        <thead><tr><th>Check</th><th>Target</th><th>Result</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Referential Integrity</td><td>All FKs resolve</td><td>0 orphans</td><td class="status-pass">PASS</td></tr>
+          <tr><td>Null Rate (CRM amounts)</td><td>&lt; 2%</td><td>0.0%</td><td class="status-pass">PASS</td></tr>
+          <tr><td>Null Rate (SAP customer ID)</td><td>&lt; 5%</td><td>6.7%</td><td class="status-warn">WARN</td></tr>
+          <tr><td>Row Count Variance</td><td>&lt; 25% from 7d avg</td><td>+8.3%</td><td class="status-pass">PASS</td></tr>
+          <tr><td>Value Range (amounts)</td><td>No negatives</td><td>0 violations</td><td class="status-pass">PASS</td></tr>
+          <tr><td>Duplicate Detection</td><td>0 duplicates</td><td>0 found</td><td class="status-pass">PASS</td></tr>
+          <tr><td>CRM-SAP Reconciliation</td><td>&ge; 95% match</td><td>89.1%</td><td class="status-fail">FAIL</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Pipeline Health: Mean Time to Detect</h3>
+      <p class="subtitle">Hours from data error to detection, before vs after automation</p>
+      <div class="chart-wrap"><canvas id="mttdChart"></canvas></div>
+    </div>
+  </div>
+
+  <button class="code-toggle" onclick="toggleCode('code-dqchecks')"><span class="arrow">&#9654;</span> View Source: 02_data_quality_checks.sql</button>
+<div class="code-panel" id="code-dqchecks">
+<span class="code-filename">02_data_quality_checks.sql</span>
+<pre><code>-- Bookings with invalid customer keys
+SELECT &#x27;REFERENTIAL_INTEGRITY&#x27; AS check_type,
+       &#x27;fact_crm_bookings.customer_key&#x27; AS check_target,
+       COUNT(*) AS error_count,
+       CASE WHEN COUNT(*) = 0 THEN &#x27;PASS&#x27; ELSE &#x27;FAIL&#x27; END AS status
+FROM fact_crm_bookings b
+LEFT JOIN dim_customer c ON b.customer_key = c.customer_key
+WHERE c.customer_key IS NULL;
+
+-- Billing docs with invalid customer keys
+SELECT &#x27;REFERENTIAL_INTEGRITY&#x27; AS check_type,
+       &#x27;fact_sap_billing.customer_key&#x27; AS check_target,
+       COUNT(*) AS error_count,
+       CASE WHEN COUNT(*) = 0 THEN &#x27;PASS&#x27; ELSE &#x27;FAIL&#x27; END AS status
+FROM fact_sap_billing b
+LEFT JOIN dim_customer c ON b.customer_key = c.customer_key
+WHERE c.customer_key IS NULL;
+
+-- CRM null rates on critical fields
+SELECT &#x27;NULL_RATE&#x27; AS check_type,
+       &#x27;fact_crm_bookings.net_booking_amount&#x27; AS check_target,
+       ROUND(SUM(CASE WHEN net_booking_amount IS NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) AS null_pct,
+       CASE WHEN SUM(CASE WHEN net_booking_amount IS NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*) &gt; 1.0
+            THEN &#x27;FAIL&#x27; ELSE &#x27;PASS&#x27; END AS status
+FROM fact_crm_bookings;
+
+-- SAP customer ID mapping gaps
+SELECT &#x27;NULL_RATE&#x27; AS check_type,
+       &#x27;dim_customer.sap_customer_id&#x27; AS check_target,
+       ROUND(SUM(CASE WHEN sap_customer_id IS NULL OR sap_customer_id = &#x27;UNMAPPED&#x27; THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) AS null_pct,
+       CASE WHEN SUM(CASE WHEN sap_customer_id IS NULL OR sap_customer_id = &#x27;UNMAPPED&#x27; THEN 1 ELSE 0 END) * 100.0 / COUNT(*) &gt; 5.0
+            THEN &#x27;WARN&#x27; ELSE &#x27;PASS&#x27; END AS status
+FROM dim_customer;
+
+-- Row count variance vs 7-day rolling average
+WITH daily_counts AS (
+    SELECT DATE(loaded_at) AS load_date, COUNT(*) AS row_count
+    FROM fact_crm_bookings
+    GROUP BY DATE(loaded_at)
+),
+rolling_avg AS (
+    SELECT load_date, row_count,
+           AVG(row_count) OVER (ORDER BY load_date ROWS BETWEEN 7 PRECEDING AND 1 PRECEDING) AS avg_7d
+    FROM daily_counts
+)
+SELECT &#x27;ROW_COUNT_VARIANCE&#x27; AS check_type,
+       load_date AS check_target,
+       row_count, ROUND(avg_7d, 1) AS rolling_avg_7d,
+       ROUND((row_count - avg_7d) / NULLIF(avg_7d, 0) * 100, 1) AS variance_pct,
+       CASE WHEN ABS((row_count - avg_7d) / NULLIF(avg_7d, 0)) &gt; 0.5 THEN &#x27;FAIL&#x27;
+            WHEN ABS((row_count - avg_7d) / NULLIF(avg_7d, 0)) &gt; 0.25 THEN &#x27;WARN&#x27;
+            ELSE &#x27;PASS&#x27; END AS status
+FROM rolling_avg
+WHERE load_date = CURRENT_DATE;
+
+-- Negative amounts
+SELECT &#x27;VALUE_RANGE&#x27; AS check_type,
+       &#x27;fact_crm_bookings.net_booking_amount&#x27; AS check_target,
+       COUNT(*) AS out_of_range_count,
+       CASE WHEN COUNT(*) &gt; 0 THEN &#x27;WARN&#x27; ELSE &#x27;PASS&#x27; END AS status
+FROM fact_crm_bookings
+WHERE net_booking_amount &lt; 0 OR net_booking_amount &gt; 500000000;
+
+-- CRM-to-SAP reconciliation by customer and period
+WITH crm_totals AS (
+    SELECT c.sfdc_account_id, c.customer_name, b.time_key,
+           SUM(b.net_booking_amount) AS crm_total
+    FROM fact_crm_bookings b
+    JOIN dim_customer c ON b.customer_key = c.customer_key
+    WHERE b.stage = &#x27;Closed Won&#x27;
+    GROUP BY c.sfdc_account_id, c.customer_name, b.time_key
+),
+sap_totals AS (
+    SELECT c.sfdc_account_id, s.time_key,
+           SUM(s.billed_amount_usd) AS sap_total
+    FROM fact_sap_billing s
+    JOIN dim_customer c ON s.customer_key = c.customer_key
+    GROUP BY c.sfdc_account_id, s.time_key
+)
+SELECT &#x27;RECONCILIATION&#x27; AS check_type,
+       crm.sfdc_account_id AS check_target,
+       crm.crm_total,
+       COALESCE(sap.sap_total, 0) AS sap_total,
+       crm.crm_total - COALESCE(sap.sap_total, 0) AS variance,
+       CASE WHEN ABS(crm.crm_total - COALESCE(sap.sap_total, 0)) / NULLIF(crm.crm_total, 0) &gt; 0.05 THEN &#x27;FAIL&#x27;
+            WHEN ABS(crm.crm_total - COALESCE(sap.sap_total, 0)) / NULLIF(crm.crm_total, 0) &gt; 0.01 THEN &#x27;WARN&#x27;
+            ELSE &#x27;PASS&#x27; END AS status
+FROM crm_totals crm
+LEFT JOIN sap_totals sap ON crm.sfdc_account_id = sap.sfdc_account_id AND crm.time_key = sap.time_key
+ORDER BY ABS(crm.crm_total - COALESCE(sap.sap_total, 0)) DESC;
+
+-- Duplicate detection
+SELECT &#x27;DUPLICATE&#x27; AS check_type,
+       &#x27;fact_crm_bookings.opportunity_id&#x27; AS check_target,
+       COUNT(*) - COUNT(DISTINCT opportunity_id) AS duplicate_count,
+       CASE WHEN COUNT(*) &gt; COUNT(DISTINCT opportunity_id) THEN &#x27;FAIL&#x27; ELSE &#x27;PASS&#x27; END AS status
+FROM fact_crm_bookings;
+
+-- Data freshness
+SELECT &#x27;FRESHNESS&#x27; AS check_type,
+       &#x27;fact_crm_bookings&#x27; AS check_target,
+       MAX(loaded_at) AS last_loaded,
+       TIMESTAMPDIFF(HOUR, MAX(loaded_at), NOW()) AS hours_since_load,
+       CASE WHEN TIMESTAMPDIFF(HOUR, MAX(loaded_at), NOW()) &gt; 24 THEN &#x27;FAIL&#x27;
+            WHEN TIMESTAMPDIFF(HOUR, MAX(loaded_at), NOW()) &gt; 12 THEN &#x27;WARN&#x27;
+            ELSE &#x27;PASS&#x27; END AS status
+FROM fact_crm_bookings;</code></pre>
+</div>
+
+  <!-- Phase 5: Reconciliation Automation -->
+  <div class="phase"><div class="phase-num">5</div><div class="phase-content"><h4>Phase 5: Automated Reconciliation Engine</h4><p>Built a Python reconciliation engine that runs the full CRM-to-SAP match daily, flags discrepancies by type (timing, amount variance, unbilled, mapping gaps), and generates an executive-ready report that replaces a manual weekly Excel process.</p></div></div>
+
+  <div class="g2 mb">
+    <div class="card">
+      <h3>Reconciliation Match Rate by Quarter</h3>
+      <p class="subtitle">Tracking reconciliation health over time with a 95% target</p>
+      <div class="chart-wrap"><canvas id="matchRateChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Revenue by Customer Segment</h3>
+      <p class="subtitle">Closed-won bookings distribution across segments</p>
+      <div class="chart-wrap"><canvas id="segmentChart"></canvas></div>
+    </div>
+  </div>
+
+<button class="code-toggle" onclick="toggleCode('code-recon')"><span class="arrow">&#9654;</span> View Source: reconciliation_engine.py</button>
+<div class="code-panel" id="code-recon">
+<span class="code-filename">reconciliation_engine.py</span>
+<pre><code>import pandas as pd
+import numpy as np
+from datetime import datetime
+import json
+import os
+
+class ReconciliationEngine:
+    THRESHOLDS = {
+        &#x27;amount_variance_pct&#x27;: 0.01,
+        &#x27;amount_variance_abs&#x27;: 500,
+        &#x27;timing_days&#x27;: 5,
+        &#x27;null_rate_critical&#x27;: 0.02,
+        &#x27;reconciliation_target&#x27;: 0.95,
+    }
+
+    def __init__(self, crm_path, sap_path, customer_master_path):
+        self.crm_df = pd.read_csv(crm_path)
+        self.sap_df = pd.read_csv(sap_path)
+        self.customer_master = pd.read_csv(customer_master_path)
+        self.results = {}
+        self.alerts = []
+        self.run_timestamp = datetime.now().isoformat()
+
+    def run_full_reconciliation(self):
+        self._check_data_quality()
+        self._reconcile_customer_master()
+        self._reconcile_revenue()
+        self._generate_summary()
+        return self.results
+
+    def _check_data_quality(self):
+        checks = []
+        for col in [&#x27;opportunity_id&#x27;, &#x27;sfdc_account_id&#x27;, &#x27;net_booking_amount_usd&#x27;, &#x27;close_date&#x27;]:
+            null_rate = self.crm_df[col].isna().mean()
+            status = &#x27;FAIL&#x27; if null_rate &gt; self.THRESHOLDS[&#x27;null_rate_critical&#x27;] else &#x27;PASS&#x27;
+            checks.append({&#x27;table&#x27;: &#x27;CRM&#x27;, &#x27;column&#x27;: col, &#x27;null_rate&#x27;: round(null_rate, 4), &#x27;status&#x27;: status})
+            if status == &#x27;FAIL&#x27;:
+                self.alerts.append(f&quot;CRITICAL: CRM column &#x27;{col}&#x27; has {null_rate:.1%} null rate&quot;)
+
+        for col in [&#x27;billing_doc_id&#x27;, &#x27;sap_customer_id&#x27;, &#x27;billed_amount_usd&#x27;]:
+            null_rate = self.sap_df[col].isna().mean()
+            status = &#x27;FAIL&#x27; if null_rate &gt; self.THRESHOLDS[&#x27;null_rate_critical&#x27;] else &#x27;PASS&#x27;
+            checks.append({&#x27;table&#x27;: &#x27;SAP&#x27;, &#x27;column&#x27;: col, &#x27;null_rate&#x27;: round(null_rate, 4), &#x27;status&#x27;: status})
+
+        crm_dupes = self.crm_df[&#x27;opportunity_id&#x27;].duplicated().sum()
+        sap_dupes = self.sap_df[&#x27;billing_doc_id&#x27;].duplicated().sum()
+        checks.append({&#x27;table&#x27;: &#x27;CRM&#x27;, &#x27;column&#x27;: &#x27;opportunity_id&#x27;, &#x27;duplicates&#x27;: crm_dupes, &#x27;status&#x27;: &#x27;FAIL&#x27; if crm_dupes &gt; 0 else &#x27;PASS&#x27;})
+        checks.append({&#x27;table&#x27;: &#x27;SAP&#x27;, &#x27;column&#x27;: &#x27;billing_doc_id&#x27;, &#x27;duplicates&#x27;: sap_dupes, &#x27;status&#x27;: &#x27;FAIL&#x27; if sap_dupes &gt; 0 else &#x27;PASS&#x27;})
+
+        self.results[&#x27;data_quality&#x27;] = pd.DataFrame(checks)
+
+    def _reconcile_customer_master(self):
+        master = self.customer_master.copy()
+        unmapped = master[master[&#x27;mapping_status&#x27;] == &#x27;PENDING_MAPPING&#x27;]
+        active = master[master[&#x27;mapping_status&#x27;] == &#x27;ACTIVE&#x27;]
+
+        crm_accounts = set(self.crm_df[&#x27;sfdc_account_id&#x27;].unique())
+        master_accounts = set(master[&#x27;sfdc_account_id&#x27;].unique())
+        orphan_crm = crm_accounts - master_accounts
+
+        self.results[&#x27;customer_master&#x27;] = {
+            &#x27;total_customers&#x27;: len(master),
+            &#x27;active_mappings&#x27;: len(active),
+            &#x27;pending_mappings&#x27;: len(unmapped),
+            &#x27;orphan_crm_accounts&#x27;: len(orphan_crm),
+            &#x27;mapping_coverage&#x27;: round(len(active) / max(len(master), 1), 4),
+        }
+
+        if len(unmapped) &gt; 0:
+            self.alerts.append(f&quot;WARNING: {len(unmapped)} customers have no SAP mapping&quot;)
+
+    def _reconcile_revenue(self):
+        closed_won = self.crm_df[self.crm_df[&#x27;stage&#x27;] == &#x27;Closed Won&#x27;].copy()
+
+        sap_by_opp = self.sap_df.groupby(&#x27;sales_order_ref&#x27;).agg(
+            sap_total=(&#x27;billed_amount_usd&#x27;, &#x27;sum&#x27;),
+            billing_count=(&#x27;billing_doc_id&#x27;, &#x27;count&#x27;),
+            first_billing_date=(&#x27;billing_date&#x27;, &#x27;min&#x27;),
+        ).reset_index()
+
+        merged = closed_won.merge(
+            sap_by_opp, left_on=&#x27;opportunity_id&#x27;, right_on=&#x27;sales_order_ref&#x27;, how=&#x27;left&#x27;
+        )
+
+        merged[&#x27;sap_total&#x27;] = merged[&#x27;sap_total&#x27;].fillna(0)
+        merged[&#x27;variance_amount&#x27;] = merged[&#x27;net_booking_amount_usd&#x27;] - merged[&#x27;sap_total&#x27;]
+        merged[&#x27;variance_pct&#x27;] = merged[&#x27;variance_amount&#x27;] / merged[&#x27;net_booking_amount_usd&#x27;].replace(0, np.nan)
+
+        conditions = [
+            merged[&#x27;sap_total&#x27;] == 0,
+            merged[&#x27;variance_pct&#x27;].abs() &gt; self.THRESHOLDS[&#x27;amount_variance_pct&#x27;],
+            merged[&#x27;variance_amount&#x27;].abs() &gt; self.THRESHOLDS[&#x27;amount_variance_abs&#x27;],
+        ]
+        labels = [&#x27;UNBILLED&#x27;, &#x27;PCT_VARIANCE&#x27;, &#x27;ABS_VARIANCE&#x27;]
+
+        merged[&#x27;discrepancy_type&#x27;] = &#x27;MATCHED&#x27;
+        for cond, label in zip(conditions, labels):
+            merged.loc[cond &amp; (merged[&#x27;discrepancy_type&#x27;] == &#x27;MATCHED&#x27;), &#x27;discrepancy_type&#x27;] = label
+
+        total = len(merged)
+        matched = len(merged[merged[&#x27;discrepancy_type&#x27;] == &#x27;MATCHED&#x27;])
+        match_rate = matched / max(total, 1)
+
+        self.results[&#x27;revenue_reconciliation&#x27;] = {
+            &#x27;total_closed_won&#x27;: total,
+            &#x27;matched&#x27;: matched,
+            &#x27;match_rate&#x27;: round(match_rate, 4),
+            &#x27;total_crm_amount&#x27;: round(merged[&#x27;net_booking_amount_usd&#x27;].sum(), 2),
+            &#x27;total_sap_amount&#x27;: round(merged[&#x27;sap_total&#x27;].sum(), 2),
+            &#x27;total_variance&#x27;: round(merged[&#x27;variance_amount&#x27;].sum(), 2),
+            &#x27;discrepancy_breakdown&#x27;: merged[&#x27;discrepancy_type&#x27;].value_counts().to_dict(),
+        }
+
+        self.results[&#x27;reconciliation_detail&#x27;] = merged
+
+        if match_rate &lt; self.THRESHOLDS[&#x27;reconciliation_target&#x27;]:
+            self.alerts.append(f&quot;CRITICAL: Match rate {match_rate:.1%} below 95% target&quot;)
+
+    def _generate_summary(self):
+        recon = self.results[&#x27;revenue_reconciliation&#x27;]
+        summary = {
+            &#x27;run_timestamp&#x27;: self.run_timestamp,
+            &#x27;dq_checks_passed&#x27;: int((self.results[&#x27;data_quality&#x27;][&#x27;status&#x27;] == &#x27;PASS&#x27;).sum()),
+            &#x27;customer_mapping_coverage&#x27;: self.results[&#x27;customer_master&#x27;][&#x27;mapping_coverage&#x27;],
+            &#x27;reconciliation_match_rate&#x27;: recon[&#x27;match_rate&#x27;],
+            &#x27;total_crm_revenue&#x27;: recon[&#x27;total_crm_amount&#x27;],
+            &#x27;total_sap_revenue&#x27;: recon[&#x27;total_sap_amount&#x27;],
+            &#x27;net_variance&#x27;: recon[&#x27;total_variance&#x27;],
+            &#x27;alerts&#x27;: self.alerts,
+        }
+        self.results[&#x27;executive_summary&#x27;] = summary
+        return summary
+
+    def export_reports(self, output_dir):
+        with open(os.path.join(output_dir, &#x27;reconciliation_summary.json&#x27;), &#x27;w&#x27;) as f:
+            json.dump(self.results[&#x27;executive_summary&#x27;], f, indent=2, default=str)
+        if &#x27;reconciliation_detail&#x27; in self.results:
+            self.results[&#x27;reconciliation_detail&#x27;].to_csv(
+                os.path.join(output_dir, &#x27;reconciliation_detail.csv&#x27;), index=False
+            )
+
+if __name__ == &#x27;__main__&#x27;:
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    data_dir = os.path.join(base_dir, &#x27;data&#x27;)
+    engine = ReconciliationEngine(
+        crm_path=os.path.join(data_dir, &#x27;crm_opportunities.csv&#x27;),
+        sap_path=os.path.join(data_dir, &#x27;sap_billing.csv&#x27;),
+        customer_master_path=os.path.join(data_dir, &#x27;customer_master.csv&#x27;),
+    )
+    engine.run_full_reconciliation()
+    engine.export_reports(data_dir)</code></pre>
+</div>
+
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SEMANTIC MODEL SECTION -->
+<section id="semantic">
+<div class="container">
+
+  <div class="section-header">
+    <span class="section-tag">Semantic Layer</span>
+    <h2>Semantic Layer</h2>
+    <p>The layer underneath dashboards that makes all reports consistent. Instead of five analysts writing five different definitions of "net revenue," there is one canonical definition here. Every report pulls from it.</p>
+  </div>
+
+  <div class="pbi-model">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+      <h3>Tabular Data Model</h3>
+      <span class="pbi-badge">Tabular Editor Compatible</span>
+      <span class="pbi-badge">XMLA Endpoint Ready</span>
+    </div>
+    <p class="subtitle">Star schema designed for Power BI semantic modeling</p>
+
+    <div class="model-diagram">
+      <div class="model-table">
+        <div class="mt-header dim">dim_Customer</div>
+        <ul>
+          <li><span class="key">PK</span> customer_key</li>
+          <li>sfdc_account_id</li>
+          <li>sap_customer_id</li>
+          <li>customer_name</li>
+          <li>region</li>
+          <li>customer_segment</li>
+          <li>tier</li>
+          <li>mapping_status</li>
+        </ul>
+      </div>
+      <div class="model-rel">1 &#10142; *</div>
+      <div class="model-table">
+        <div class="mt-header fact">fact_Revenue</div>
+        <ul>
+          <li><span class="key">PK</span> revenue_key</li>
+          <li><span class="fk">FK</span> customer_key</li>
+          <li><span class="fk">FK</span> product_key</li>
+          <li><span class="fk">FK</span> date_key</li>
+          <li>crm_booking_amount</li>
+          <li>sap_billed_amount</li>
+          <li>variance_amount</li>
+          <li>discount_pct</li>
+          <li>deal_type</li>
+          <li>recon_status</li>
+        </ul>
+      </div>
+      <div class="model-rel">* &#10140; 1</div>
+      <div class="model-table">
+        <div class="mt-header dim">dim_Product</div>
+        <ul>
+          <li><span class="key">PK</span> product_key</li>
+          <li>product_sku</li>
+          <li>product_name</li>
+          <li>product_category</li>
+          <li>base_price_usd</li>
+        </ul>
+      </div>
+    </div>
+    <div class="model-diagram" style="margin-top:8px">
+      <div class="model-table">
+        <div class="mt-header dim">dim_Date</div>
+        <ul>
+          <li><span class="key">PK</span> date_key</li>
+          <li>calendar_date</li>
+          <li>fiscal_year</li>
+          <li>fiscal_quarter</li>
+          <li>month_name</li>
+          <li>is_quarter_end</li>
+        </ul>
+      </div>
+      <div class="model-rel">1 &#10142; *</div>
+      <div class="model-table">
+        <div class="mt-header bridge">bridge_Recon</div>
+        <ul>
+          <li><span class="fk">FK</span> opportunity_id</li>
+          <li><span class="fk">FK</span> billing_doc_id</li>
+          <li>crm_amount</li>
+          <li>sap_amount</li>
+          <li>variance_pct</li>
+          <li>discrepancy_type</li>
+          <li>resolution_status</li>
+        </ul>
+      </div>
+      <div class="model-rel">* &#10140; 1</div>
+      <div class="model-table">
+        <div class="mt-header dim">dim_Region</div>
+        <ul>
+          <li><span class="key">PK</span> region_key</li>
+          <li>region_code</li>
+          <li>region_name</li>
+          <li>geography</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb">
+    <h3>DAX Measure Library</h3>
+    <p class="subtitle">8 canonical measures defined once in Tabular Editor, version-controlled via TMDL, deployed through XMLA endpoint</p>
+    <table class="data-table">
+      <thead><tr><th>Measure</th><th>Category</th><th>Logic</th><th>Used In</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Net Bookings</strong></td><td>Revenue</td><td>Filtered sum of CRM booking amounts for Closed Won deals only</td><td>All revenue dashboards</td></tr>
+        <tr><td><strong>Recognized Revenue</strong></td><td>Revenue</td><td>Filtered sum of SAP billed amounts for POSTED status only</td><td>Finance close reports</td></tr>
+        <tr><td><strong>Booking-to-Billing Ratio</strong></td><td>Reconciliation</td><td>Net Bookings / Recognized Revenue. Target: 0.95-1.05</td><td>Recon health dashboard</td></tr>
+        <tr><td><strong>Recon Match Rate</strong></td><td>Reconciliation</td><td>% of deals where CRM and SAP match within 1% tolerance</td><td>Pipeline health monitor</td></tr>
+        <tr><td><strong>Revenue QoQ Growth</strong></td><td>Time Intelligence</td><td>Current quarter vs prior quarter using DATEADD offset</td><td>Exec quarterly review</td></tr>
+        <tr><td><strong>Revenue YoY Growth</strong></td><td>Time Intelligence</td><td>Current quarter vs same quarter prior year</td><td>Board reporting</td></tr>
+        <tr><td><strong>Customer Mapping Coverage</strong></td><td>Data Quality</td><td>Active mappings / total customers in master</td><td>Governance scorecard</td></tr>
+        <tr><td><strong>Data Freshness Alert</strong></td><td>Data Quality</td><td>STALE if last load > 24 hours ago, FRESH otherwise</td><td>All dashboard headers</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-bottom:20px">
+    <p style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--text)">Deployment Workflow</p>
+    <div class="flow" style="margin:0">
+      <div class="flow-step"><div class="step-title">Tabular Editor</div><div class="step-sub">Author measures + model</div></div>
+      <div class="flow-arrow">&#10142;</div>
+      <div class="flow-step"><div class="step-title">Git Repository</div><div class="step-sub">Version control (TMDL)</div></div>
+      <div class="flow-arrow">&#10142;</div>
+      <div class="flow-step"><div class="step-title">CI/CD Pipeline</div><div class="step-sub">Validate + deploy</div></div>
+      <div class="flow-arrow">&#10142;</div>
+      <div class="flow-step"><div class="step-title">Power BI Service</div><div class="step-sub">XMLA endpoint publish</div></div>
+    </div>
+  </div>
+
+  <div class="card mb">
+    <h3>Semantic Metric Definitions</h3>
+    <p class="subtitle">Canonical metric library ensuring consistency across Power BI and ad-hoc SQL</p>
+    <table class="data-table">
+      <thead><tr><th>Metric</th><th>Definition</th><th>Source</th><th>Alert Threshold</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Net Bookings</strong></td><td>Sum of net booking amount after discounts, closed-won only</td><td>CRM (SFDC)</td><td>N/A</td></tr>
+        <tr><td><strong>Recognized Revenue</strong></td><td>Sum of billed amount for PRODUCT revenue type, posted status</td><td>SAP S/4HANA</td><td>N/A</td></tr>
+        <tr><td><strong>Booking-to-Billing Ratio</strong></td><td>Net Bookings / Recognized Revenue. Target: 0.95-1.05</td><td>Derived</td><td class="status-warn">&gt;1.10 or &lt;0.90</td></tr>
+        <tr><td><strong>Reconciliation Match Rate</strong></td><td>% of deals where CRM and SAP amounts match within 1% tolerance</td><td>Derived</td><td class="status-fail">&lt; 95%</td></tr>
+        <tr><td><strong>Customer Mapping Coverage</strong></td><td>% of customers with valid SFDC-to-SAP ID mapping</td><td>Customer Master</td><td class="status-warn">&lt; 98%</td></tr>
+        <tr><td><strong>Data Freshness</strong></td><td>Hours since last successful ETL pipeline completion</td><td>Pipeline Monitor</td><td class="status-fail">&gt; 24 hours</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+<button class="code-toggle" onclick="toggleCode('code-semantic')"><span class="arrow">&#9654;</span> View Source: 03_semantic_layer.yml</button>
+<div class="code-panel" id="code-semantic">
+<span class="code-filename">03_semantic_layer.yml</span>
+<pre><code>version: 2
+
+semantic_models:
+  - name: revenue_analytics
+    description: &gt;
+      Unified revenue analytics model bridging CRM bookings and SAP billing.
+      Single-source-of-truth definitions for Finance, Sales Ops, and FP&amp;A.
+    model: ref(&#x27;fct_revenue_unified&#x27;)
+    defaults:
+      agg_time_dimension: close_date
+
+    entities:
+      - name: opportunity
+        type: primary
+        expr: opportunity_id
+      - name: customer
+        type: foreign
+        expr: customer_key
+      - name: product
+        type: foreign
+        expr: product_key
+
+    dimensions:
+      - name: close_date
+        type: time
+        type_params:
+          time_granularity: day
+      - name: fiscal_quarter
+        type: categorical
+        expr: nvidia_fiscal_quarter
+      - name: product_category
+        type: categorical
+      - name: customer_segment
+        type: categorical
+      - name: region
+        type: categorical
+      - name: deal_type
+        type: categorical
+      - name: revenue_type
+        type: categorical
+
+    measures:
+      - name: total_contract_value
+        agg: sum
+        expr: total_contract_value_usd
+        create_metric: true
+      - name: net_bookings
+        agg: sum
+        expr: net_booking_amount_usd
+        create_metric: true
+      - name: recognized_revenue
+        agg: sum
+        expr: billed_amount_usd
+        create_metric: true
+      - name: deal_count
+        agg: count_distinct
+        expr: opportunity_id
+        create_metric: true
+      - name: avg_deal_size
+        agg: average
+        expr: net_booking_amount_usd
+        create_metric: true
+
+metrics:
+  - name: net_bookings
+    label: &quot;Net Bookings&quot;
+    type: simple
+    type_params:
+      measure: net_bookings
+    filter: |
+      {{ Dimension(&#x27;stage&#x27;) }} = &#x27;Closed Won&#x27;
+
+  - name: recognized_revenue
+    label: &quot;Recognized Revenue&quot;
+    type: simple
+    type_params:
+      measure: recognized_revenue
+    filter: |
+      {{ Dimension(&#x27;revenue_type&#x27;) }} = &#x27;PRODUCT&#x27;
+
+  - name: booking_to_billing_ratio
+    label: &quot;Booking-to-Billing Ratio&quot;
+    type: derived
+    type_params:
+      expr: net_bookings / recognized_revenue
+      metrics:
+        - name: net_bookings
+        - name: recognized_revenue
+
+  - name: reconciliation_variance
+    label: &quot;Reconciliation Variance&quot;
+    type: derived
+    type_params:
+      expr: net_bookings - recognized_revenue
+      metrics:
+        - name: net_bookings
+        - name: recognized_revenue
+
+  - name: win_rate
+    label: &quot;Win Rate&quot;
+    type: derived
+    type_params:
+      expr: closed_won_count / total_opportunity_count
+
+  - name: customer_mapping_coverage
+    label: &quot;Customer Mapping Coverage&quot;
+    type: derived
+    type_params:
+      expr: active_mappings / total_customers
+
+  - name: data_freshness_hours
+    label: &quot;Data Freshness (Hours)&quot;
+    type: simple
+    type_params:
+      measure: hours_since_last_load</code></pre>
+</div>
+
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- BUSINESS IMPACT -->
+<section id="impact">
+<div class="container">
+  <div class="section-header">
+    <span class="section-tag">Business Impact</span>
+    <h2>Results and Recommendations</h2>
+    <p>Measurable outcomes from building the governed reporting infrastructure</p>
+  </div>
+
+  <div class="g2 mb">
+    <div class="card">
+      <h3>NVIDIA Revenue: Quarterly Trend</h3>
+      <p class="subtitle">Real NVIDIA revenue data (FY2025-FY2026) anchoring the analysis</p>
+      <div class="chart-wrap"><canvas id="nvRevenueChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Revenue Segment Mix: FY2026</h3>
+      <p class="subtitle">Data Center dominance at 89.7%, a key reporting dimension</p>
+      <div class="chart-wrap"><canvas id="nvSegmentPie"></canvas></div>
+    </div>
+  </div>
+
+  <div class="g3">
+    <div class="insight"><div class="num">01</div><h4>Close Cycle: Days to Hours</h4><p>Automated reconciliation replaces manual Excel matching, reducing the monthly close process from 5+ days of cross-checking to same-day validation with exception-based review.</p></div>
+    <div class="insight"><div class="num">02</div><h4>Single Version of Truth</h4><p>Customer master governance and canonical metric definitions eliminate the scenario where Sales, Finance, and FP&amp;A report different numbers to leadership.</p></div>
+    <div class="insight"><div class="num">03</div><h4>Error Detection: Weeks to Minutes</h4><p>Automated quality gates catch integration failures within the same pipeline run. A sync error that previously took 3 weeks to surface is now flagged before data reaches any dashboard.</p></div>
+    <div class="insight"><div class="num">04</div><h4>$55.9M Variance Surfaced</h4><p>35 unbilled deals identified automatically. Previously, these gaps surfaced only during quarter-end reconciliation, delaying revenue recognition and forecast accuracy.</p></div>
+    <div class="insight"><div class="num">05</div><h4>Dashboard Trustworthiness</h4><p>A data health score visible on every dashboard builds confidence in the reporting layer. Finance no longer questions whether the numbers are right.</p></div>
+    <div class="insight"><div class="num">06</div><h4>Semantic Consistency</h4><p>12 canonical metric definitions across Power BI and ad-hoc SQL ensure every consumer of revenue data gets the same answer to the same question.</p></div>
+  </div>
+</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- DASHBOARD SCREENSHOTS -->
+<section id="dashboard">
+<div class="container">
+  <div class="section-header">
+    <span class="section-tag">Interactive Dashboard</span>
+    <h2>Power BI Dashboard</h2>
+    <p>Preliminary dashboard built in Power BI Desktop using the synthetic dataset. This is an early draft showcasing the data model, DAX measures, and cross-filtered layout. A polished version with refined formatting and additional drill-throughs is in progress.</p>
+  </div>
+
+  <div class="card mb">
+    <h3>Page 1: Revenue Reconciliation Overview</h3>
+    <p class="subtitle">KPI cards, CRM vs SAP quarterly comparison, discrepancy breakdown, and segment donut</p>
+    <img src="https://raw.githubusercontent.com/mcchelle/Nvidia/main/Snapshot/dashboard_page1.png" alt="Revenue Reconciliation Overview" style="width:100%;border-radius:10px;margin-top:12px;border:1px solid var(--border)">
+  </div>
+
+  <div class="card mb">
+    <h3>Page 2: Data Quality and Customer Master</h3>
+    <p class="subtitle">Customer mapping table, pipeline health matrix, and mapping coverage gauge</p>
+    <img src="https://raw.githubusercontent.com/mcchelle/Nvidia/main/Snapshot/dashboard_page2.png" alt="Data Quality and Customer Master" style="width:100%;border-radius:10px;margin-top:12px;border:1px solid var(--border)">
+  </div>
+
+  <div class="card mb">
+    <h3>Page 3: NVIDIA Revenue Context</h3>
+    <p class="subtitle">Real NVIDIA quarterly revenue, segment mix, and reconciliation match rate trend</p>
+    <img src="https://raw.githubusercontent.com/mcchelle/Nvidia/main/Snapshot/dashboard_page3.png" alt="NVIDIA Revenue Context" style="width:100%;border-radius:10px;margin-top:12px;border:1px solid var(--border)">
+  </div>
+
+</div>
+</section>
+
+<footer>
+  <p>Michelle Chan | NVIDIA Revenue Analytics Business Case</p>
+  <p style="margin-top:6px">Financial data sourced from <a href="https://investor.nvidia.com" target="_blank">NVIDIA Investor Relations</a> and SEC filings (FY2025-FY2026). Operational data is synthetic, designed to demonstrate analytical methodology.</p>
+</footer>
+
+<script>
+Chart.defaults.color='#8888aa';
+Chart.defaults.borderColor='rgba(37,37,80,0.4)';
+Chart.defaults.font.family="'Segoe UI',sans-serif";
+const G='rgba(42,42,74,0.25)';
+
+new Chart(document.getElementById('discrepancyChart'),{
+  type:'bar',
+  data:{labels:['Timing Difference','Missing SAP Mapping','Amount Variance','Unbilled','Split Billing'],
+    datasets:[{data:[33,25,13,10,5],backgroundColor:['#4fc3f7','#ef5350','#ffb74d','#b388ff','#26c6da'],borderRadius:6}]},
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+    scales:{x:{grid:{color:G},title:{display:true,text:'Count'}},y:{grid:{display:false}}}}
+});
+
+new Chart(document.getElementById('quarterChart'),{
+  type:'bar',
+  data:{labels:['Q3 FY25','Q4 FY25','Q1 FY26','Q2 FY26','Q3 FY26','Q4 FY26'],
+    datasets:[{label:'CRM Bookings ($M)',data:[44.3,120.1,177.9,185.4,101.7,194.6],backgroundColor:'rgba(118,185,0,0.6)',borderRadius:6},
+      {label:'SAP Billing ($M)',data:[38.0,108.5,165.2,172.8,96.3,187.2],backgroundColor:'rgba(79,195,247,0.6)',borderRadius:6}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{padding:12}}},
+    scales:{y:{beginAtZero:true,grid:{color:G},title:{display:true,text:'$M'}},x:{grid:{display:false}}}}
+});
+
+new Chart(document.getElementById('mttdChart'),{
+  type:'bar',
+  data:{labels:['Q3 FY25','Q4 FY25','Q1 FY26','Q2 FY26','Q3 FY26','Q4 FY26'],
+    datasets:[{label:'Before Automation (hrs)',data:[168,168,168,168,168,168],backgroundColor:'rgba(239,83,80,0.4)',borderRadius:6},
+      {label:'After Automation (hrs)',data:[14.1,41.2,3.4,31.7,37.7,43.7],backgroundColor:'rgba(118,185,0,0.6)',borderRadius:6}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},
+    scales:{y:{beginAtZero:true,grid:{color:G},title:{display:true,text:'Hours'}},x:{grid:{display:false}}}}
+});
+
+new Chart(document.getElementById('matchRateChart'),{
+  type:'line',
+  data:{labels:['Q3 FY25','Q4 FY25','Q1 FY26','Q2 FY26','Q3 FY26','Q4 FY26'],
+    datasets:[{label:'Match Rate',data:[93.9,92.4,94.4,87.0,91.1,86.3],borderColor:'#76B900',backgroundColor:'rgba(118,185,0,0.1)',fill:true,tension:0.3,pointRadius:6,pointBackgroundColor:'#76B900'},
+      {label:'95% Target',data:[95,95,95,95,95,95],borderColor:'#ef5350',borderDash:[8,4],pointRadius:0,borderWidth:2}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},
+    scales:{y:{min:80,max:100,grid:{color:G},ticks:{callback:v=>v+'%'}},x:{grid:{display:false}}}}
+});
+
+new Chart(document.getElementById('segmentChart'),{
+  type:'doughnut',
+  data:{labels:['Gaming','Data Center','Pro Visualization','Automotive'],
+    datasets:[{data:[488.4,299.2,27.5,8.8],backgroundColor:['#4fc3f7','#76B900','#b388ff','#ffb74d'],borderColor:'#12122a',borderWidth:3}]},
+  options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{position:'bottom',labels:{padding:10,font:{size:12}}}}}
+});
+
+new Chart(document.getElementById('nvRevenueChart'),{
+  type:'bar',
+  data:{labels:['Q1 FY25','Q2 FY25','Q3 FY25','Q4 FY25','Q1 FY26','Q2 FY26','Q3 FY26','Q4 FY26'],
+    datasets:[{label:'Revenue ($B)',data:[26.0,30.0,35.1,39.3,44.1,46.7,57.0,68.1],
+      backgroundColor:ctx=>ctx.dataIndex>=4?'rgba(118,185,0,0.8)':'rgba(118,185,0,0.35)',borderColor:'#76B900',borderWidth:1,borderRadius:6}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+    scales:{y:{beginAtZero:true,grid:{color:G},title:{display:true,text:'$B'}},x:{grid:{display:false}}}}
+});
+
+new Chart(document.getElementById('nvSegmentPie'),{
+  type:'doughnut',
+  data:{labels:['Data Center (89.7%)','Gaming (7.4%)','Pro Viz (1.5%)','Auto (1.1%)','OEM (0.3%)'],
+    datasets:[{data:[89.7,7.4,1.5,1.1,0.3],backgroundColor:['#76B900','#4fc3f7','#b388ff','#ffb74d','#26c6da'],borderColor:'#12122a',borderWidth:3}]},
+  options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{position:'bottom',labels:{padding:10,font:{size:11}}}}}
+});
+</script>
+
+<script>
+function toggleCode(id){
+  var panel=document.getElementById(id);
+  var btn=panel.previousElementSibling;
+  while(btn && !btn.classList.contains('code-toggle')) btn=btn.previousElementSibling;
+  if(panel.classList.contains('open')){
+    panel.classList.remove('open');
+    if(btn) btn.classList.remove('open');
+  } else {
+    panel.classList.add('open');
+    if(btn) btn.classList.add('open');
+  }
+}
+</script>
+</body>
+</html>
