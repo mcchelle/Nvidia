@@ -159,7 +159,7 @@ footer{text-align:center;padding:40px;border-top:1px solid var(--border);color:v
 <div class="hero" id="overview">
   <div>
     <h1>Revenue Analytics <span class="green">Business Case</span></h1>
-    <p class="sub">An end-to-end case study showing how I diagnosed revenue discrepancies across CRM and ERP systems, then built a governed BI pipeline with a semantic layer that Finance, Sales, and FP&amp;A all trust.</p>
+    <p class="sub">An end-to-end case study showing how I diagnosed revenue discrepancies across CRM and ERP systems, then built a governed BI pipeline with a semantic layer that Finance, Sales, and Product all trust.</p>
   </div>
   <div class="hero-stats">
     <div class="stat-card"><div class="val" style="color:var(--nv)">$215.9B</div><div class="lbl">NVIDIA FY2026 Revenue</div></div>
@@ -179,7 +179,7 @@ footer{text-align:center;padding:40px;border-top:1px solid var(--border);color:v
   <div class="uc-header">
     <div class="uc-role">Business Case</div>
     <h2>From Revenue Discrepancy to Trusted Single Source of Truth</h2>
-    <p>Revenue data lives across Salesforce (CRM bookings) and SAP S/4HANA (billing, revenue recognition). When these systems disagree, Finance loses confidence, executives get inconsistent answers, and planning cycles slow down. Meanwhile, integrations between SAP and third-party systems break silently and errors reach dashboards before anyone catches them. This case demonstrates how I diagnosed the problem, built the data infrastructure to fix it, and delivered a governed reporting layer that the entire Finance organization trusts.</p>
+    <p>Revenue data lives across Salesforce (CRM bookings) and SAP BW (billing, revenue recognition). When these systems disagree, Finance loses confidence, executives get inconsistent answers, and planning cycles slow down. Meanwhile, integrations between SAP and third-party systems break silently and errors reach dashboards before anyone catches them. This case demonstrates how I diagnosed the problem, built the data infrastructure to fix it, and delivered a governed reporting layer that the entire Finance organization trusts.</p>
   </div>
 
   <!-- Phase 1: Diagnose the Gap -->
@@ -617,7 +617,7 @@ CREATE INDEX idx_customer_mapping ON dim_customer(sfdc_account_id, sap_customer_
     <div class="flow-arrow">&#10142;</div>
     <div class="flow-step" style="border-color:var(--nv)"><div class="step-title" style="color:var(--nv)">Customer Master</div><div class="step-sub">SFDC / SAP Mapping</div></div>
     <div class="flow-arrow">&#10142;</div>
-    <div class="flow-step"><div class="step-title">SAP S/4HANA</div><div class="step-sub">Billing, Rev Rec</div></div>
+    <div class="flow-step"><div class="step-title">SAP BW</div><div class="step-sub">Billing, Rev Rec</div></div>
     <div class="flow-arrow">&#10142;</div>
     <div class="flow-step"><div class="step-title">ELT (dbt)</div><div class="step-sub">Transform + Test</div></div>
     <div class="flow-arrow">&#10142;</div>
@@ -625,7 +625,7 @@ CREATE INDEX idx_customer_mapping ON dim_customer(sfdc_account_id, sap_customer_
     <div class="flow-arrow">&#10142;</div>
     <div class="flow-step" style="border-color:var(--purple)"><div class="step-title" style="color:var(--purple)">Semantic Layer</div><div class="step-sub">Canonical Metrics</div></div>
     <div class="flow-arrow">&#10142;</div>
-    <div class="flow-step"><div class="step-title">Tableau</div><div class="step-sub">Dashboards</div></div>
+    <div class="flow-step"><div class="step-title">Power BI</div><div class="step-sub">Dashboards</div></div>
   </div>
 
   <!-- Phase 4: Data Quality Framework -->
@@ -1080,7 +1080,7 @@ if __name__ == &#x27;__main__&#x27;:
       <thead><tr><th>Metric</th><th>Definition</th><th>Source</th><th>Alert Threshold</th></tr></thead>
       <tbody>
         <tr><td><strong>Net Bookings</strong></td><td>Sum of net booking amount after discounts, closed-won only</td><td>CRM (SFDC)</td><td>N/A</td></tr>
-        <tr><td><strong>Recognized Revenue</strong></td><td>Sum of billed amount for PRODUCT revenue type, posted status</td><td>SAP S/4HANA</td><td>N/A</td></tr>
+        <tr><td><strong>Recognized Revenue</strong></td><td>Sum of billed amount for PRODUCT revenue type, posted status</td><td>SAP BW</td><td>N/A</td></tr>
         <tr><td><strong>Booking-to-Billing Ratio</strong></td><td>Net Bookings / Recognized Revenue. Target: 0.95-1.05</td><td>Derived</td><td class="status-warn">&gt;1.10 or &lt;0.90</td></tr>
         <tr><td><strong>Reconciliation Match Rate</strong></td><td>% of deals where CRM and SAP amounts match within 1% tolerance</td><td>Derived</td><td class="status-fail">&lt; 95%</td></tr>
         <tr><td><strong>Customer Mapping Coverage</strong></td><td>% of customers with valid SFDC-to-SAP ID mapping</td><td>Customer Master</td><td class="status-warn">&lt; 98%</td></tr>
