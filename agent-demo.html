@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Michelle Chan | AI Agent Workflows for Finance</title>
+<style>
+:root{--nv:#76B900;--nv-dark:#5a9200;--nv-glow:rgba(118,185,0,0.15);--bg:#0a0a16;--card:#12122a;--border:#252550;--text:#e4e4f0;--muted:#8888aa;--blue:#4fc3f7;--purple:#b388ff;--orange:#ffb74d;--red:#ef5350;--teal:#26c6da}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);line-height:1.65}
+a{color:var(--nv);text-decoration:none}
+
+/* Nav */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,22,0.92);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 40px}
+.logo{font-size:16px;font-weight:700;color:var(--nv);letter-spacing:1px}
+.logo span{color:var(--text);font-weight:300}
+nav ul{list-style:none;display:flex;gap:28px}
+nav a{color:var(--muted);font-size:13px;font-weight:500;transition:color .3s}
+nav a:hover{color:var(--nv)}
+
+.container{max-width:1200px;margin:0 auto;padding:0 40px}
+
+/* Hero */
+.hero{padding:110px 0 40px;text-align:center}
+.hero h1{font-size:38px;font-weight:800;margin-bottom:12px}
+.green{color:var(--nv)}
+.hero p{color:var(--muted);font-size:15px;max-width:750px;margin:0 auto 10px}
+.section-tag{display:inline-block;background:var(--nv-glow);color:var(--nv);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:5px 14px;border-radius:16px;margin-bottom:14px}
+.status-bar{display:flex;justify-content:center;gap:24px;margin-top:20px;flex-wrap:wrap}
+.status-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.status-dot{width:7px;height:7px;border-radius:50%;animation:pulse 2s infinite}
+.status-val{font-weight:800;color:var(--text)}
+
+/* Tabs */
+.tabs{display:flex;gap:6px;margin:30px 0 30px;justify-content:center;flex-wrap:wrap}
+.tab{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 20px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .3s;font-family:inherit;display:flex;align-items:center;gap:8px}
+.tab:hover{border-color:var(--nv);color:var(--text)}
+.tab.active{background:var(--nv-glow);border-color:var(--nv);color:var(--nv)}
+.tab .tab-num{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
+.tab.active .tab-num{background:var(--nv);color:#000}
+
+/* Panels */
+.panel{display:none;animation:fadeIn .4s ease}
+.panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* Common card */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:16px}
+.card h3{font-size:15px;font-weight:700;margin-bottom:4px}
+.card .sub{font-size:12px;color:var(--muted);margin-bottom:16px}
+
+/* Panel header */
+.panel-header{margin-bottom:28px}
+.panel-header h2{font-size:26px;font-weight:800;margin-bottom:6px}
+.panel-header p{font-size:14px;color:var(--muted);max-width:750px;line-height:1.6}
+
+/* Grid layouts */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+
+/* Architecture flow */
+.arch{display:flex;align-items:center;justify-content:center;gap:0;margin:0 0 28px;flex-wrap:wrap}
+.arch-step{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;text-align:center;min-width:120px}
+.arch-step.active{border-color:var(--nv);box-shadow:0 0 16px rgba(118,185,0,0.12)}
+.arch-step .st{font-size:11px;font-weight:600;margin-bottom:2px}
+.arch-step .ss{font-size:9px;color:var(--muted)}
+.arch-arrow{font-size:20px;color:var(--nv);padding:0 5px}
+
+/* =========================================
+   SHARED: Feed + Check Styles
+   ========================================= */
+.monitor-feed{max-height:500px;overflow-y:auto;padding-right:8px}
+.monitor-feed::-webkit-scrollbar{width:5px}
+.monitor-feed::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+.check-item{display:flex;align-items:flex-start;gap:12px;padding:12px;border-radius:10px;margin-bottom:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);opacity:0;transform:translateX(-20px);transition:all .4s ease}
+.check-item.visible{opacity:1;transform:translateX(0)}
+.check-icon{min-width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.check-icon.pass{background:rgba(118,185,0,0.15);color:var(--nv)}
+.check-icon.fail{background:rgba(239,83,80,0.15);color:var(--red)}
+.check-icon.warn{background:rgba(255,183,77,0.15);color:var(--orange)}
+.check-icon.info{background:rgba(79,195,247,0.15);color:var(--blue)}
+.check-title{font-size:13px;font-weight:600}
+.check-detail{font-size:12px;color:var(--muted);margin-top:2px}
+.check-time{font-size:10px;color:var(--muted);margin-top:3px}
+
+.run-btn{background:var(--nv);color:#000;border:none;border-radius:10px;padding:14px 32px;font-weight:700;font-size:14px;cursor:pointer;transition:all .3s;font-family:inherit;display:flex;align-items:center;gap:8px;margin:0 auto}
+.run-btn:hover{background:var(--nv-dark);transform:translateY(-1px)}
+.run-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+
+/* =========================================
+   PANEL 2: NL QUERY
+   ========================================= */
+.chat-container{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.chat-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.chat-dot{width:8px;height:8px;border-radius:50%;background:var(--nv);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.chat-badge{font-size:10px;background:var(--nv-glow);color:var(--nv);padding:3px 10px;border-radius:10px;font-weight:600}
+
+.chat-body{padding:20px;min-height:380px;max-height:480px;overflow-y:auto}
+.chat-body::-webkit-scrollbar{width:5px}
+.chat-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+.msg{margin-bottom:16px;animation:fadeIn .4s ease}
+.msg.user{text-align:right}
+.msg.user .bubble{background:rgba(118,185,0,0.12);border:1px solid rgba(118,185,0,0.25);display:inline-block;padding:10px 16px;border-radius:14px 14px 4px 14px;max-width:70%;text-align:left;font-size:13px}
+.msg.agent .bubble{background:rgba(255,255,255,0.02);border:1px solid var(--border);padding:14px 18px;border-radius:14px 14px 14px 4px;max-width:92%;font-size:13px}
+.msg .sender{font-size:10px;color:var(--muted);margin-bottom:3px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+
+.pipe-step{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;padding:6px 10px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04)}
+.pipe-icon{min-width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+.pipe-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+.pipe-value{font-size:12px;margin-top:1px}
+.pipe-step.interpret .pipe-icon{background:rgba(79,195,247,0.15);color:var(--blue)}
+.pipe-step.metrics .pipe-icon{background:var(--nv-glow);color:var(--nv)}
+.pipe-step.sql .pipe-icon{background:rgba(179,136,255,0.15);color:var(--purple)}
+.pipe-step.validate .pipe-icon{background:rgba(118,185,0,0.15);color:var(--nv)}
+.pipe-step.decline .pipe-icon{background:rgba(239,83,80,0.15);color:var(--red)}
+
+code{font-family:'SF Mono','Fira Code',monospace;font-size:11px;background:rgba(0,0,0,0.3);padding:6px 10px;border-radius:5px;display:block;margin-top:3px;color:var(--blue);white-space:pre-wrap;line-height:1.5}
+
+.result-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+.result-table th{text-align:left;padding:5px 8px;color:var(--nv);font-weight:600;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.3px}
+.result-table td{padding:5px 8px;border-bottom:1px solid rgba(37,37,80,0.4);font-size:12px}
+.governed-by{font-size:10px;color:var(--muted);margin-top:8px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.05)}
+.governed-by strong{color:var(--nv)}
+
+/* Reasoning chain */
+.reasoning-chain{display:flex;flex-direction:column;gap:6px}
+.reason-step{display:flex;gap:8px;align-items:flex-start}
+.rs-icon{min-width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;margin-top:1px}
+.rs-content{flex:1;min-width:0}
+.rs-label{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:1px}
+.rs-text{font-size:12px;line-height:1.5}
+
+.suggestions{display:flex;flex-wrap:wrap;gap:6px;padding:0 20px 12px}
+.chip{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:18px;padding:6px 12px;font-size:11px;color:var(--muted);cursor:pointer;transition:all .3s;font-family:inherit}
+.chip:hover{border-color:var(--nv);color:var(--nv);background:var(--nv-glow)}
+.chat-input{display:flex;gap:8px;padding:14px 20px;border-top:1px solid var(--border);background:rgba(0,0,0,0.2)}
+.chat-input input{flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:border-color .3s}
+.chat-input input:focus{border-color:var(--nv)}
+.chat-input input::placeholder{color:var(--muted)}
+.chat-input button{background:var(--nv);color:#000;border:none;border-radius:8px;padding:10px 20px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit}
+
+/* Semantic sidebar */
+.sem-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
+.sem-card h4{font-size:11px;font-weight:700;color:var(--nv);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px}
+.metric-item{padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:11px}
+.metric-item:last-child{border-bottom:none}
+.metric-item .m-name{font-weight:600}
+.metric-item .m-owner{color:var(--muted);font-size:9px}
+.metric-item.highlight{background:var(--nv-glow);margin:0 -6px;padding:4px 6px;border-radius:4px}
+.dim-tag{display:inline-block;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);padding:2px 6px;border-radius:3px;font-size:10px;margin:2px}
+.dim-tag.highlight{background:var(--nv-glow);border-color:rgba(118,185,0,0.3);color:var(--nv)}
+
+.query-layout{display:grid;grid-template-columns:1fr 260px;gap:16px;align-items:start}
+
+/* =========================================
+   PANEL 3: ANOMALY DETECTION
+   ========================================= */
+.anomaly-feed{max-height:520px;overflow-y:auto}
+.anomaly-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:12px;opacity:0;transform:translateY(10px);transition:all .5s ease}
+.anomaly-card.visible{opacity:1;transform:translateY(0)}
+.anomaly-card.critical{border-left:3px solid var(--red)}
+.anomaly-card.warning{border-left:3px solid var(--orange)}
+.anomaly-card.info{border-left:3px solid var(--blue)}
+.anomaly-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.anomaly-severity{font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.5px}
+.severity-critical{background:rgba(239,83,80,0.15);color:var(--red)}
+.severity-warning{background:rgba(255,183,77,0.15);color:var(--orange)}
+.severity-info{background:rgba(79,195,247,0.15);color:var(--blue)}
+.anomaly-metric{font-size:14px;font-weight:700;margin-bottom:4px}
+.anomaly-detail{font-size:13px;color:var(--text);margin-bottom:8px;line-height:1.5}
+.anomaly-context{font-size:11px;color:var(--muted);background:rgba(0,0,0,0.2);padding:10px;border-radius:6px;line-height:1.6}
+.anomaly-context strong{color:var(--text)}
+.anomaly-time{font-size:10px;color:var(--muted)}
+.anomaly-actions{display:flex;gap:6px;margin-top:10px}
+.anomaly-actions button{font-size:10px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:var(--muted);cursor:pointer;font-family:inherit;transition:all .3s}
+.anomaly-actions button:hover{border-color:var(--nv);color:var(--nv)}
+
+/* =========================================
+   PANEL 4: DASHBOARD VALIDATION
+   ========================================= */
+
+/* Footer */
+footer{text-align:center;padding:40px;color:var(--muted);font-size:12px;border-top:1px solid var(--border);margin-top:40px}
+
+@media(max-width:900px){
+  .g2,.g3,.query-layout{grid-template-columns:1fr}
+  .arch{flex-direction:column;gap:4px}
+  .arch-arrow{transform:rotate(90deg)}
+  .tabs{flex-direction:column;align-items:stretch}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">MC <span>| AI Agent Workflows</span></div>
+  <ul>
+    <li><a href="index.html">Portfolio</a></li>
+    <li><a href="agent-demo.html" style="color:var(--nv)">Agent Demo</a></li>
+  </ul>
+</nav>
+
+<div class="container">
+<div class="hero">
+  <span class="section-tag">Interactive Prototypes</span>
+  <h1>AI Agents for <span class="green">Finance Analytics</span></h1>
+  <p>Three agent prototypes showing how AI can automate revenue operations at NVIDIA. Each demo uses the governed semantic layer and synthetic dataset from the portfolio case study.</p>
+  <!-- System Status Bar -->
+  <div class="status-bar">
+    <div class="status-item">
+      <div class="status-dot" style="background:var(--red)"></div>
+      <span class="status-val">5</span> active anomalies
+    </div>
+    <div class="status-item">
+      <div class="status-dot" style="background:var(--orange)"></div>
+      <span class="status-val">5</span> dashboard mismatches
+    </div>
+    <div class="status-item">
+      <div class="status-dot" style="background:var(--nv)"></div>
+      <span class="status-val" id="queryCount">0</span> governed queries served
+    </div>
+    <div class="status-item">
+      <div class="status-dot" style="background:var(--blue)"></div>
+      <span class="status-val">13</span> governed metrics
+    </div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab active" onclick="switchTab(0)"><span class="tab-num">1</span>Anomaly Detection</button>
+  <button class="tab" onclick="switchTab(1)"><span class="tab-num">2</span>NL Query Agent</button>
+  <button class="tab" onclick="switchTab(2)"><span class="tab-num">3</span>Dashboard Validation</button>
+</div>
+
+<!-- ═══════════════════════════════════════
+     PANEL 1: ANOMALY DETECTION
+     ═══════════════════════════════════════ -->
+<div class="panel active" id="panel0">
+  <div class="panel-header">
+    <h2>Anomaly Detection &amp; Alerting Agent</h2>
+    <p>Monitors key finance metrics continuously against rolling baselines and proactively surfaces actionable alerts. Not just "revenue is down" but the specific segment, root cause, affected customers, and recommended action.</p>
+  </div>
+
+  <div class="arch">
+    <div class="arch-step"><div class="st">Metric Streams</div><div class="ss">Revenue, billing, pipeline</div></div>
+    <div class="arch-arrow">&#10142;</div>
+    <div class="arch-step"><div class="st">Baseline Comparison</div><div class="ss">30-day rolling avg</div></div>
+    <div class="arch-arrow">&#10142;</div>
+    <div class="arch-step active"><div class="st" style="color:var(--nv)">Anomaly Classification</div><div class="ss">LLM root cause</div></div>
+    <div class="arch-arrow">&#10142;</div>
+    <div class="arch-step"><div class="st">Contextual Alert</div><div class="ss">Who, what, why</div></div>
+    <div class="arch-arrow">&#10142;</div>
+    <div class="arch-step"><div class="st">Route to Owner</div><div class="ss">Slack + Jira</div></div>
+  </div>
+
+  <button class="run-btn" id="runAnomalyBtn" onclick="runAnomalyDetection()">
+    <span>&#9654;</span> Scan for Anomalies
+  </button>
+
+  <div style="margin-top:24px">
+    <div class="anomaly-feed" id="anomalyFeed"></div>
+    <!-- Impact summary appears after all anomalies -->
+    <div id="anomalyImpact" style="display:none;margin-top:16px">
+      <div class="card" style="border-color:var(--nv);background:rgba(118,185,0,0.04)">
+        <h3 style="color:var(--nv)">Projected Impact if All Alerts Resolved</h3>
+        <div class="sub">Estimated effect on key metrics</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+          <div style="text-align:center;padding:12px;background:rgba(0,0,0,0.2);border-radius:8px">
+            <div style="font-size:10px;color:var(--muted)">Recon Match Rate</div>
+            <div style="font-size:11px;color:var(--red);margin:4px 0">82.8% <span style="color:var(--muted)">current</span></div>
+            <div style="font-size:18px;font-weight:800;color:var(--nv)">94.2%</div>
+            <div style="font-size:10px;color:var(--nv)">+11.4 pts</div>
+          </div>
+          <div style="text-align:center;padding:12px;background:rgba(0,0,0,0.2);border-radius:8px">
+            <div style="font-size:10px;color:var(--muted)">Unbilled Backlog</div>
+            <div style="font-size:11px;color:var(--red);margin:4px 0">$19.3M <span style="color:var(--muted)">current</span></div>
+            <div style="font-size:18px;font-weight:800;color:var(--nv)">$10.7M</div>
+            <div style="font-size:10px;color:var(--nv)">-$8.6M</div>
+          </div>
+          <div style="text-align:center;padding:12px;background:rgba(0,0,0,0.2);border-radius:8px">
+            <div style="font-size:10px;color:var(--muted)">Mapping Coverage</div>
+            <div style="font-size:11px;color:var(--red);margin:4px 0">93.3% <span style="color:var(--muted)">current</span></div>
+            <div style="font-size:18px;font-weight:800;color:var(--nv)">100%</div>
+            <div style="font-size:10px;color:var(--nv)">+6.7 pts</div>
+          </div>
+        </div>
+      </div>
+      <!-- Cross-tab investigation -->
+      <div style="margin-top:12px;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:12px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Investigate Further</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <button class="chip" onclick="switchTab(1);setTimeout(()=>askQ('Show me unbilled backlog by segment'),300)">Query: Backlog by segment</button>
+          <button class="chip" onclick="switchTab(1);setTimeout(()=>askQ('What is our booking to billing ratio?'),300)">Query: Book-to-bill ratio</button>
+          <button class="chip" onclick="switchTab(1);setTimeout(()=>askQ('Show me net bookings by product category'),300)">Query: APAC revenue breakdown</button>
+          <button class="chip" onclick="switchTab(2)">Validate the dashboard</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     PANEL 2: NL QUERY AGENT
+     ═══════════════════════════════════════ -->
+<div class="panel" id="panel1">
+  <div class="panel-header">
+    <h2>Natural Language Query Agent</h2>
+    <p>Finance users ask questions in plain English. The agent translates to governed SQL, validates against the semantic layer, executes, and returns a formatted answer. Ungoverned metrics are declined.</p>
+  </div>
+
+  <div class="arch">
+    <div class="arch-step"><div class="st">User Question</div><div class="ss">Plain English</div></div>
+    <div class="arch-arrow">&#10142;</div>
+    <div class="arch-step active"><div class="st" style="color:var(--nv)">LLM Translation</div><div class="ss">Claude API</div></div>
+    <div class="arch-arrow">&#10142;</div>
+    <div class="arch-step"><div class="st">Semantic Validation</div><div class="ss">Governed metrics only</div></div>
+    <div class="arch-arrow">&#10142;</div>
+    <div class="arch-step"><div class="st">SQL Execution</div><div class="ss">Snowflake</div></div>
+    <div class="arch-arrow">&#10142;</div>
+    <div class="arch-step"><div class="st">Formatted Answer</div><div class="ss">Tables + narrative</div></div>
+  </div>
+
+  <div class="query-layout">
+    <div>
+      <div class="chat-container">
+        <div class="chat-header">
+          <div class="chat-dot"></div>
+          <h3 style="font-size:13px;font-weight:600">Revenue Analytics Agent</h3>
+          <span class="chat-badge">Governed Mode</span>
+        </div>
+        <div class="chat-body" id="chatBody">
+          <div class="msg agent"><div class="sender">Agent</div><div class="bubble">I translate finance questions into governed SQL by reasoning through each step: identifying the metric, looking up its semantic layer definition, constructing the query, validating against authorized tables, and explaining the results.<br><br>Watch my thinking process as I work through each question. Try one below.</div></div>
+        </div>
+        <div class="suggestions" id="suggestions">
+          <button class="chip" onclick="askQ('What is our revenue?')">Revenue (ambiguous)</button>
+          <button class="chip" onclick="askQ('How does Q3 compare to Q4?')">Q3 vs Q4</button>
+          <button class="chip" onclick="askQ('Show me the revenue waterfall')">Waterfall</button>
+          <button class="chip" onclick="askQ('Show me net bookings by product category')">By product</button>
+          <button class="chip" onclick="askQ('What about Q3?')">Filter to Q3</button>
+          <button class="chip" onclick="askQ('What is our booking to billing ratio?')">Book-to-bill</button>
+          <button class="chip" onclick="askQ('Show me unbilled backlog by segment')">Backlog by segment</button>
+          <button class="chip" onclick="askQ('What is our pipeline?')">Pipeline</button>
+          <button class="chip" onclick="askQ('How many discrepancies do we have by type?')">Discrepancies</button>
+          <button class="chip" onclick="askQ('What is our gross margin?')">Gross margin &#10007;</button>
+        </div>
+        <div class="chat-input">
+          <input type="text" id="userInput" placeholder="Ask a revenue question..." onkeydown="if(event.key==='Enter')askQ()">
+          <button onclick="askQ()">Ask</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="sem-card">
+        <h4>Revenue Metrics</h4>
+        <div class="metric-item" data-metric="net_bookings"><div class="m-name">Net Bookings</div><div class="m-owner">Revenue Ops | CRM closed-won after discounts</div></div>
+        <div class="metric-item" data-metric="gross_bookings"><div class="m-name">Gross Bookings</div><div class="m-owner">Revenue Ops | CRM contract value before discounts</div></div>
+        <div class="metric-item" data-metric="recognized_revenue"><div class="m-name">Recognized Revenue</div><div class="m-owner">Finance | SAP posted billings (ASC 606)</div></div>
+        <div class="metric-item" data-metric="total_billings"><div class="m-name">Total Billings</div><div class="m-owner">Finance | SAP all statuses</div></div>
+        <div class="metric-item" data-metric="scheduled_revenue"><div class="m-name">Scheduled Revenue</div><div class="m-owner">FP&A | Booked but not yet billed</div></div>
+        <div class="metric-item" data-metric="pipeline_value"><div class="m-name">Pipeline Value</div><div class="m-owner">Sales Ops | Open opportunities by stage</div></div>
+      </div>
+      <div class="sem-card">
+        <h4>Reconciliation Metrics</h4>
+        <div class="metric-item" data-metric="booking_to_billing_ratio"><div class="m-name">Booking-to-Billing Ratio</div><div class="m-owner">Revenue Ops | Target: 0.95-1.05</div></div>
+        <div class="metric-item" data-metric="discrepancy_count"><div class="m-name">Discrepancy Count</div><div class="m-owner">Revenue Ops</div></div>
+        <div class="metric-item" data-metric="customer_mapping_coverage"><div class="m-name">Mapping Coverage</div><div class="m-owner">Data Governance | Target: 98%</div></div>
+      </div>
+      <div class="sem-card">
+        <h4>Sales Metrics</h4>
+        <div class="metric-item" data-metric="average_deal_size"><div class="m-name">Average Deal Size</div><div class="m-owner">Sales Ops</div></div>
+        <div class="metric-item" data-metric="win_rate"><div class="m-name">Win Rate</div><div class="m-owner">Sales Ops</div></div>
+        <div class="metric-item" data-metric="discount_rate"><div class="m-name">Avg Discount Rate</div><div class="m-owner">Deal Desk</div></div>
+      </div>
+      <div class="sem-card">
+        <h4>Dimensions</h4>
+        <div style="display:flex;flex-wrap:wrap;gap:3px">
+          <span class="dim-tag" data-dim="fiscal_quarter">Fiscal Quarter</span>
+          <span class="dim-tag" data-dim="product_category">Product</span>
+          <span class="dim-tag" data-dim="region">Region</span>
+          <span class="dim-tag" data-dim="customer_segment">Segment</span>
+          <span class="dim-tag" data-dim="deal_type">Deal Type</span>
+          <span class="dim-tag" data-dim="discrepancy_type">Discrepancy</span>
+          <span class="dim-tag" data-dim="stage">Stage</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Cross-tab prompts -->
+  <div style="margin-top:16px;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:12px">
+    <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Related Workflows</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px">
+      <button class="chip" onclick="switchTab(0)">View active anomalies</button>
+      <button class="chip" onclick="switchTab(2)">Validate the live dashboard</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     PANEL 3: DASHBOARD VALIDATION
+     ═══════════════════════════════════════ -->
+<div class="panel" id="panel2">
+  <div class="panel-header">
+    <h2>Dashboard Validation Agent</h2>
+    <p>Screenshots a live Tableau dashboard, reads every number using computer vision, compares each value against the data warehouse via governed SQL, and flags anything that doesn't match. Catches stale extracts, wrong calculations, broken filters, and misleading visuals before a stakeholder makes a decision on bad numbers.</p>
+  </div>
+
+  <div class="arch">
+    <div class="arch-step"><div class="st">Tableau Dashboard</div><div class="ss">Playwright screenshot</div></div>
+    <div class="arch-arrow">&#10142;</div>
+    <div class="arch-step active"><div class="st" style="color:var(--nv)">Vision Extraction</div><div class="ss">Claude reads all values</div></div>
+    <div class="arch-arrow">&#10142;</div>
+    <div class="arch-step"><div class="st">Snowflake Query</div><div class="ss">Same metric, governed SQL</div></div>
+    <div class="arch-arrow">&#10142;</div>
+    <div class="arch-step"><div class="st">Value Comparison</div><div class="ss">Drift tolerance: 0.5%</div></div>
+    <div class="arch-arrow">&#10142;</div>
+    <div class="arch-step"><div class="st">Validation Report</div><div class="ss">Pass / Fail per visual</div></div>
+  </div>
+
+  <button class="run-btn" id="runDashValBtn" onclick="runDashboardValidation()">
+    <span>&#9654;</span> Validate Dashboard
+  </button>
+
+  <div class="g2" style="margin-top:24px">
+    <!-- Left: Tableau Dashboard Screenshot -->
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="background:#2c5697;padding:8px 18px;display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:12px;font-weight:600;color:#fff">Hotel Revenue Performance (Tableau Public)</div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.5)" id="dashRefreshLabel">Extract: Jan 18, 2025</div>
+      </div>
+      <div style="position:relative">
+        <img src="https://raw.githubusercontent.com/mcchelle/Nvidia/main/Snapshot/hotel_dashboard.png"
+             alt="Hotel Revenue Performance Dashboard"
+             style="width:100%;display:block;border-radius:0 0 14px 14px"
+             onerror="this.style.display='none';document.getElementById('dash-fallback').style.display='flex'">
+        <div id="dash-fallback" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:420px;padding:30px;text-align:center;background:var(--card)">
+          <div style="font-size:36px;margin-bottom:10px">&#127976;</div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:6px">Hotel Revenue Performance Dashboard</div>
+          <div style="font-size:11px;color:var(--muted);max-width:380px;line-height:1.6;margin-bottom:14px">
+            Save the dashboard screenshot as <code style="display:inline;padding:2px 6px;font-size:10px">hotel_dashboard.png</code> in your GitHub repo's Snapshot folder, or the extracted values below will be used.
+          </div>
+          <div style="font-size:10px;color:var(--muted);background:rgba(0,0,0,0.2);padding:12px 14px;border-radius:8px;text-align:left;line-height:2;width:100%">
+            <div style="font-weight:600;color:var(--text);margin-bottom:4px">Values extracted by Claude Vision:</div>
+            <div style="font-weight:600;color:var(--blue);margin-bottom:2px">KPI Cards:</div>
+            <div>Total Revenue: <strong style="color:var(--text)">171,402K</strong> &nbsp; Room Revenue: <strong style="color:var(--text)">104,388K</strong> &nbsp; F&B Revenue: <strong style="color:var(--text)">42,643K</strong></div>
+            <div>No. of Bookings: <strong style="color:var(--text)">4,752</strong> &nbsp; No. of Room Nights: <strong style="color:var(--text)">20,602</strong></div>
+            <div style="font-weight:600;color:var(--blue);margin-top:6px;margin-bottom:2px">Revenue Share Donut:</div>
+            <div>Room Revenue: <strong style="color:var(--text)">61%</strong> &nbsp; F&B Revenue: <strong style="color:var(--text)">25%</strong> &nbsp; Other Spending: <strong style="color:var(--text)">14%</strong></div>
+            <div style="font-weight:600;color:var(--blue);margin-top:6px;margin-bottom:2px">Country Bar Chart:</div>
+            <div>Tonga: ~120M &nbsp; UAE: ~30M &nbsp; Samoa: ~10M &nbsp; Maldives: ~5M &nbsp; <span style="color:var(--red)">Axis: 0M-120M</span></div>
+            <div style="font-weight:600;color:var(--blue);margin-top:6px;margin-bottom:2px">Revenue Table (2015-2017):</div>
+            <div>Total Revenue: 63,936K -> 56,256K -> 51,210K &nbsp; YoY: <span style="color:var(--red)">-12.0%, -9.0%</span></div>
+            <div style="font-weight:600;color:var(--blue);margin-top:6px;margin-bottom:2px">Hotel Table Grand Total:</div>
+            <div>Room: 104,388K &nbsp; F&B: 42,643K &nbsp; Other: 24,370K &nbsp; Total: <span style="color:var(--orange)">171,401K</span> (vs KPI 171,402K)</div>
+            <div style="font-weight:600;color:var(--blue);margin-top:6px;margin-bottom:2px">Filters:</div>
+            <div>Year: (All) &nbsp; Month: (All) &nbsp; Market Code: (All) &nbsp; Country: (All) &nbsp; Hotel: (All)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Validation results -->
+    <div>
+      <div class="card">
+        <h3>Validation Results</h3>
+        <div class="sub">Each dashboard element checked against data warehouse source of truth</div>
+        <div id="dashValFeed" class="monitor-feed" style="max-height:520px"></div>
+        <div id="dashValSummary" style="display:none;margin-top:14px">
+          <!-- Summary -->
+          <div style="padding:14px;background:rgba(239,83,80,0.06);border:1px solid rgba(239,83,80,0.2);border-radius:10px;margin-bottom:12px">
+            <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:8px">Dashboard Health: 5 of 14 checks failed</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.7">
+              This dashboard should <strong style="color:var(--red)">not be used for decisions</strong> until the extract is refreshed. Root cause: $1.25M in F&B billing corrections were applied to the warehouse on Feb 3, but the Tableau extract dates from Jan 18.
+            </div>
+          </div>
+          <!-- Corrected values table -->
+          <div style="padding:14px;background:rgba(118,185,0,0.04);border:1px solid rgba(118,185,0,0.15);border-radius:10px;margin-bottom:12px">
+            <div style="font-size:12px;font-weight:700;color:var(--nv);margin-bottom:10px">Corrected Dashboard Values</div>
+            <table class="result-table">
+              <thead><tr><th>Metric</th><th>Dashboard Shows</th><th>Should Show</th><th>Delta</th></tr></thead>
+              <tbody>
+                <tr><td>Total Revenue</td><td>171,402K</td><td style="color:var(--nv);font-weight:600">172,650K</td><td style="color:var(--red)">+1,248K</td></tr>
+                <tr><td>F&B Revenue</td><td>42,643K</td><td style="color:var(--nv);font-weight:600">43,891K</td><td style="color:var(--red)">+1,248K</td></tr>
+                <tr><td>No. of Bookings</td><td>4,752</td><td style="color:var(--nv);font-weight:600">4,698</td><td style="color:var(--red)">-54</td></tr>
+                <tr><td>River Resort Total</td><td>35,190K</td><td style="color:var(--nv);font-weight:600">36,042K</td><td style="color:var(--red)">+852K</td></tr>
+                <tr><td>2017 YoY Decline</td><td>-9.0%</td><td style="color:var(--nv);font-weight:600">-6.7%</td><td style="color:var(--red)">2.3 pts</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- Business risk -->
+          <div style="padding:14px;background:rgba(255,183,77,0.06);border:1px solid rgba(255,183,77,0.15);border-radius:10px;margin-bottom:12px">
+            <div style="font-size:12px;font-weight:700;color:var(--orange);margin-bottom:8px">Business Risk Assessment</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.7">
+              <strong style="color:var(--text)">Strategic risk:</strong> The 2017 YoY decline is being overstated to stakeholders (-9.0% displayed vs -6.7% actual). If headcount, investment, or pricing decisions are being made based on a perceived 9% revenue decline, the business may be over-correcting. The actual decline is 25% less severe than what the dashboard shows.<br><br>
+              <strong style="color:var(--text)">Operational risk:</strong> The 54 cancelled bookings still counted on the dashboard inflate conversion metrics and may lead to inflated forecasts. F&B revenue understatement of $1.25M could affect banquet pricing negotiations currently underway at River Resort and Island Resort.
+            </div>
+          </div>
+          <!-- Cross-tab -->
+          <div style="padding:14px;background:var(--card);border:1px solid var(--border);border-radius:10px">
+            <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Investigate Further</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <button class="chip" onclick="switchTab(1);setTimeout(()=>askQ('What is our revenue?'),300)">Query: Revenue breakdown</button>
+              <button class="chip" onclick="switchTab(1);setTimeout(()=>askQ('How does Q3 compare to Q4?'),300)">Query: Q3 vs Q4</button>
+              <button class="chip" onclick="switchTab(0)">View active anomalies</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- container -->
+
+<footer>Michelle Chan | UC Berkeley Haas MBA | AI Agent Prototypes for NVIDIA Finance Analytics</footer>
+
+<script>
+/* ═══════════════════════════════════════
+   TAB SWITCHING
+   ═══════════════════════════════════════ */
+function switchTab(idx) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+  document.querySelectorAll('.panel').forEach((p,i) => p.classList.toggle('active', i===idx));
+}
+
+/* ═══════════════════════════════════════
+   PANEL 2: NL QUERY AGENT (Reasoning Engine)
+   ═══════════════════════════════════════ */
+
+// ── Semantic Layer Definition (the agent's knowledge base) ──
+const SEM = {
+  metrics: {
+    net_bookings:    {label:"Net Bookings", sql:"SUM(CASE WHEN stage='Closed Won' THEN net_booking_amount_usd ELSE 0 END)", table:"crm_opportunities", owner:"Revenue Ops", desc:"CRM booking value after discounts, closed-won deals only"},
+    gross_bookings:  {label:"Gross Bookings", sql:"SUM(CASE WHEN stage='Closed Won' THEN total_contract_value_usd ELSE 0 END)", table:"crm_opportunities", owner:"Revenue Ops", desc:"Total contract value before discounts"},
+    recognized_revenue: {label:"Recognized Revenue", sql:"SUM(CASE WHEN posting_status='POSTED' THEN billed_amount_usd ELSE 0 END)", table:"sap_billing", owner:"Finance", desc:"SAP posted billings per ASC 606"},
+    total_billings:  {label:"Total Billings", sql:"SUM(billed_amount_usd)", table:"sap_billing", owner:"Finance", desc:"All SAP billing documents regardless of posting status"},
+    scheduled_revenue: {label:"Scheduled Revenue", sql:"net_bookings - total_billings", table:"derived", owner:"FP&A", desc:"Contracted amounts not yet billed (unbilled backlog)"},
+    deal_count:      {label:"Deal Count", sql:"COUNT(DISTINCT CASE WHEN stage='Closed Won' THEN opportunity_id END)", table:"crm_opportunities", owner:"Sales Ops", desc:"Unique closed-won opportunities"},
+    average_deal_size: {label:"Average Deal Size", sql:"AVG(CASE WHEN stage='Closed Won' THEN net_booking_amount_usd END)", table:"crm_opportunities", owner:"Sales Ops", desc:"Mean net booking per closed-won deal"},
+    win_rate:        {label:"Win Rate", sql:"SUM(CASE WHEN stage='Closed Won' THEN 1.0 ELSE 0 END) / COUNT(*)", table:"crm_opportunities", owner:"Sales Ops", desc:"% of opportunities closing as won"},
+    discount_rate:   {label:"Discount Rate", sql:"AVG(CASE WHEN stage='Closed Won' THEN discount_pct END)", table:"crm_opportunities", owner:"Deal Desk", desc:"Average discount on closed-won deals"},
+    booking_to_billing: {label:"Booking-to-Billing Ratio", sql:"net_bookings / total_billings", table:"derived", owner:"Revenue Ops", desc:"CRM bookings divided by SAP billings. Target: 0.95-1.05"},
+    discrepancy_count: {label:"Discrepancy Count", sql:"COUNT(*)", table:"discrepancy_log", owner:"Revenue Ops", desc:"CRM-to-SAP reconciliation mismatches"},
+    mapping_coverage: {label:"Mapping Coverage", sql:"SUM(CASE WHEN mapping_status='ACTIVE' THEN 1.0 ELSE 0 END) / COUNT(*)", table:"customer_master", owner:"Data Governance", desc:"% of customers with valid SFDC-to-SAP mapping. Target: 98%"},
+    pipeline_value:  {label:"Pipeline Value", sql:"SUM(net_booking_amount_usd)", table:"crm_opportunities", owner:"Sales Ops", desc:"Total value of open opportunities by stage"},
+  },
+  dimensions: {
+    fiscal_quarter:   {label:"Fiscal Quarter", col:"fiscal_quarter", tables:["crm_opportunities","sap_billing"]},
+    product_category: {label:"Product Category", col:"product_category", tables:["crm_opportunities"]},
+    region:           {label:"Region", col:"region", tables:["crm_opportunities"]},
+    customer_segment: {label:"Customer Segment", col:"customer_segment", tables:["crm_opportunities","customer_master"]},
+    deal_type:        {label:"Deal Type", col:"deal_type", tables:["crm_opportunities"]},
+    discrepancy_type: {label:"Discrepancy Type", col:"type", tables:["discrepancy_log"]},
+    stage:            {label:"Stage", col:"stage", tables:["crm_opportunities"]},
+  },
+  tables: {
+    crm_opportunities: {cols:["opportunity_id","account_name","sfdc_account_id","product_category","region","customer_segment","deal_type","stage","fiscal_quarter","close_date","quantity","unit_price_usd","total_contract_value_usd","discount_pct","net_booking_amount_usd","sales_rep"]},
+    sap_billing: {cols:["billing_doc_id","sap_customer_id","sales_order_ref","product_sku","billing_date","fiscal_period","billed_quantity","billed_amount_usd","revenue_type","posting_status"]},
+    customer_master: {cols:["sfdc_account_id","sap_customer_id","customer_name","region","customer_segment","tier","mapping_status"]},
+    discrepancy_log: {cols:["opportunity_id","type","detail"]},
+  },
+  // Pre-computed results keyed by generated SQL hash
+  results: {}
+};
+
+// ── Pre-computed result bank (keyed by metric+dimension+filter combos) ──
+const R = {
+  "net_bookings||": [["$146,812,491"]],
+  "net_bookings|product_category|": [["Data Center","$68,816,468"],["Gaming","$57,370,379"],["Pro Visualization","$11,451,024"],["Automotive","$6,449,498"],["OEM & Other","$2,725,123"]],
+  "net_bookings|fiscal_quarter|": [["Q3 FY2025","$44,280,974"],["Q4 FY2025","$38,917,462"],["Q1 FY2026","$32,156,830"],["Q2 FY2026","$31,457,225"]],
+  "net_bookings|customer_segment|": [["Cloud CSP","$36,841,290"],["Hyperscaler","$34,218,441"],["Enterprise","$28,556,993"],["Government","$19,283,645"],["OEM","$12,804,350"]],
+  "net_bookings|region|": [["APAC","$52,418,200"],["US-West","$38,216,442"],["EU","$31,890,510"],["US-East","$24,287,339"]],
+  "net_bookings||Q3": [["$44,280,974"]],
+  "net_bookings||Q4": [["$38,917,462"]],
+  "net_bookings|product_category|Q3": [["Gaming","$37,841,536"],["Pro Visualization","$3,150,979"],["Data Center","$3,093,936"],["Automotive","$194,524"]],
+  "net_bookings|product_category|Q4": [["Data Center","$22,415,883"],["Gaming","$10,128,344"],["Pro Visualization","$3,812,090"],["Automotive","$1,886,442"],["OEM & Other","$674,703"]],
+  "gross_bookings||": [["$163,108,320"]],
+  "recognized_revenue||": [["$127,436,892"]],
+  "recognized_revenue||Q3": [["$38,412,667"]],
+  "recognized_revenue||Q4": [["$34,218,440"]],
+  "recognized_revenue|fiscal_quarter|": [["Q3 FY2025","$38,412,667"],["Q4 FY2025","$34,218,440"],["Q1 FY2026","$28,890,210"],["Q2 FY2026","$25,915,575"]],
+  "total_billings|fiscal_quarter|": [["Q3 FY2025","$40,218,442"],["Q4 FY2025","$36,112,330"],["Q1 FY2026","$30,442,218"],["Q2 FY2026","$27,445,450"]],
+  "scheduled_revenue|fiscal_quarter|": [["Q3 FY2025","$4,062,532"],["Q4 FY2025","$2,805,132"],["Q1 FY2026","$1,714,612"],["Q2 FY2026","$4,011,775"]],
+  "net_bookings|deal_type|": [["Renewal","$42,218,440"],["Expansion","$38,112,330"],["New","$36,442,218"],["Upsell","$30,039,503"]],
+  "gross_bookings|fiscal_quarter|": [["Q3 FY2025","$49,201,082"],["Q4 FY2025","$43,241,624"],["Q1 FY2026","$35,730,758"],["Q2 FY2026","$34,934,856"]],
+  "total_billings||": [["$134,218,440","$127,436,892","$6,781,548"]],
+  "scheduled_revenue||": [["$12,594,051"]],
+  "scheduled_revenue|customer_segment|": [["Cloud CSP","$4,812,390"],["Enterprise","$3,218,442"],["Hyperscaler","$2,106,330"],["Government","$1,542,810"],["OEM","$914,079"]],
+  "booking_to_billing||": [["1.094"]],
+  "booking_to_billing|product_category|": [["Automotive","1.095"],["Gaming","1.150"],["Data Center","1.102"],["Pro Visualization","1.121"],["OEM & Other","0.470"]],
+  "booking_to_billing|fiscal_quarter|": [["Q3 FY2025","1.101"],["Q4 FY2025","1.078"],["Q1 FY2026","1.056"],["Q2 FY2026","1.146"]],
+  "deal_count||": [["322"]],
+  "average_deal_size||": [["$455,938"]],
+  "average_deal_size|region|": [["APAC","$3,080,900"],["EU","$2,798,551"],["US-West","$2,580,525"],["US-East","$2,045,243"]],
+  "win_rate||": [["64.4%"]],
+  "win_rate|deal_type|": [["Renewal","69.8%"],["Expansion","67.5%"],["Upsell","65.1%"],["New","55.6%"]],
+  "discount_rate||": [["9.8%"]],
+  "discount_rate|product_category|": [["OEM & Other","12.8%"],["Gaming","10.5%"],["Automotive","9.3%"],["Pro Viz","8.7%"],["Data Center","7.2%"]],
+  "discrepancy_count|discrepancy_type|": [["TIMING_DIFFERENCE","33"],["MISSING_SAP_MAPPING","25"],["AMOUNT_VARIANCE","13"],["UNBILLED","10"],["SPLIT_BILLING","5"]],
+  "mapping_coverage||": [["93.3%"]],
+  "pipeline_value|stage|": [["Closed Won","322","$146,812,491"],["Negotiation","28","$18,442,100"],["Proposal","35","$14,890,225"],["Qualification","41","$9,218,650"]],
+  "pipeline_value|product_category|": [["Data Center","$92,418,200"],["Gaming","$62,370,379"],["Pro Visualization","$16,451,024"],["Automotive","$10,449,498"],["OEM & Other","$7,674,365"]],
+  // Multi-dimension results
+  "net_bookings|product_category+fiscal_quarter|": [["Data Center","Q3 FY2025","$3,093,936"],["Data Center","Q4 FY2025","$22,415,883"],["Data Center","Q1 FY2026","$21,840,218"],["Data Center","Q2 FY2026","$21,466,431"],["Gaming","Q3 FY2025","$37,841,536"],["Gaming","Q4 FY2025","$10,128,344"],["Gaming","Q1 FY2026","$5,218,440"],["Gaming","Q2 FY2026","$4,182,059"],["Pro Viz","Q3 FY2025","$3,150,979"],["Pro Viz","Q4 FY2025","$3,812,090"],["Pro Viz","Q1 FY2026","$2,544,218"],["Pro Viz","Q2 FY2026","$1,943,737"]],
+  "average_deal_size|product_category+fiscal_quarter|": [["Data Center","Q3 FY2025","$386,742"],["Data Center","Q4 FY2025","$560,397"],["Data Center","Q1 FY2026","$545,005"],["Data Center","Q2 FY2026","$536,661"],["Gaming","Q3 FY2025","$540,593"],["Gaming","Q4 FY2025","$337,611"],["Gaming","Q1 FY2026","$290,969"],["Gaming","Q2 FY2026","$278,804"],["Pro Viz","Q3 FY2025","$225,070"],["Pro Viz","Q4 FY2025","$272,292"],["Pro Viz","Q1 FY2026","$254,422"],["Pro Viz","Q2 FY2026","$242,967"],["Automotive","Q3 FY2025","$97,262"],["Automotive","Q4 FY2025","$188,644"],["OEM & Other","Q4 FY2025","$134,941"]],
+  "average_deal_size|product_category|": [["Gaming","$447,425"],["Data Center","$511,304"],["Pro Viz","$248,696"],["Automotive","$161,237"],["OEM & Other","$136,253"]],
+  "average_deal_size|fiscal_quarter|": [["Q3 FY2025","$491,899"],["Q4 FY2025","$432,416"],["Q1 FY2026","$422,327"],["Q2 FY2026","$412,990"]],
+  "win_rate|fiscal_quarter|": [["Q3 FY2025","68.2%"],["Q4 FY2025","65.1%"],["Q1 FY2026","62.8%"],["Q2 FY2026","61.4%"]],
+  "discount_rate|fiscal_quarter|": [["Q3 FY2025","9.2%"],["Q4 FY2025","9.6%"],["Q1 FY2026","10.1%"],["Q2 FY2026","10.4%"]],
+  "net_bookings|region+fiscal_quarter|": [["APAC","Q3 FY2025","$18,412,100"],["APAC","Q4 FY2025","$14,218,442"],["US-West","Q3 FY2025","$12,890,510"],["US-West","Q4 FY2025","$10,216,330"],["EU","Q3 FY2025","$8,287,339"],["EU","Q4 FY2025","$9,218,650"],["US-East","Q3 FY2025","$4,691,025"],["US-East","Q4 FY2025","$5,264,040"]],
+};
+
+// ── Reasoning Engine ──
+function reason(question) {
+  const q = question.toLowerCase();
+  const steps = [];
+
+  // Check for comparison or multi-quarter queries
+  const isCompare = /compare|vs\.?|versus|difference|q[1-4].*(?:and|&).*q[1-4]|q[1-4].*q[1-4]|how does.*compare/i.test(q);
+  const mentionedQs = [];
+  if (/q1/i.test(q)) mentionedQs.push('Q1');
+  if (/q2/i.test(q)) mentionedQs.push('Q2');
+  if (/q3/i.test(q)) mentionedQs.push('Q3');
+  if (/q4/i.test(q)) mentionedQs.push('Q4');
+
+  if ((isCompare || mentionedQs.length >= 2) && mentionedQs.length >= 2) {
+    steps.push({type:'think', text:`Parsing question: "${question}"`});
+
+    // Detect the metric for comparison
+    let cmpMetric = null;
+    const cmpMetricMap = [
+      {keys:["deal size","avg deal","average deal"],id:"average_deal_size"},
+      {keys:["net bookings","bookings"],id:"net_bookings"},
+      {keys:["recognized revenue"],id:"recognized_revenue"},
+      {keys:["win rate"],id:"win_rate"},
+      {keys:["discount"],id:"discount_rate"},
+      {keys:["billings"],id:"total_billings"},
+    ];
+    for (const m of cmpMetricMap) { for (const k of m.keys) { if (q.includes(k)){cmpMetric=m.id;break;} } if(cmpMetric)break; }
+    if (!cmpMetric) cmpMetric = lastTopic || 'net_bookings';
+    const cmpDef = SEM.metrics[cmpMetric];
+
+    // Detect dimension for breakdown
+    let cmpDim = null;
+    if (/by product|product category/i.test(q)) cmpDim = 'product_category';
+    else if (/by region/i.test(q)) cmpDim = 'region';
+    else if (/by segment/i.test(q)) cmpDim = 'customer_segment';
+
+    const qFYs = mentionedQs.map(qq => qq === 'Q1' || qq === 'Q2' ? `${qq} FY2026` : `${qq} FY2025`);
+    steps.push({type:'think', text:`Detected multi-quarter request: ${mentionedQs.join(' and ')}. Metric: ${cmpDef.label}.${cmpDim ? ' Dimension: '+SEM.dimensions[cmpDim].label+'.' : ''} Will query both quarters and compute deltas.`});
+    steps.push({type:'lookup', metric:cmpMetric, def:cmpDef});
+
+    let selectCols = cmpDim ? `${SEM.dimensions[cmpDim].col},\n  ` : '';
+    let groupBy = cmpDim ? `GROUP BY fiscal_quarter, ${SEM.dimensions[cmpDim].col}` : 'GROUP BY fiscal_quarter';
+    const sql = `SELECT ${selectCols}fiscal_quarter,\n  ${cmpDef.sql} AS ${cmpMetric}\nFROM ${cmpDef.table}\nWHERE fiscal_quarter IN ('${qFYs.join("','")}')\n${groupBy}\nORDER BY ${cmpMetric} DESC`;
+    steps.push({type:'sql', text:sql});
+    steps.push({type:'validate', text:`Tables: ${cmpDef.table} FOUND. Metric: ${cmpDef.label} governed by ${cmpDef.owner}. No blocked patterns.\nVALIDATION PASSED.`});
+
+    // Get results from pre-computed data
+    let rKey = cmpDim ? `${cmpMetric}|${cmpDim}+fiscal_quarter|` : `${cmpMetric}|fiscal_quarter|`;
+    let allRows = R[rKey] || R[`${cmpMetric}|fiscal_quarter|`] || [];
+
+    // If no fiscal_quarter breakdown exists, try to build from individual quarter results
+    if (allRows.length === 0) {
+      for (const mq of mentionedQs) {
+        const singleRow = R[`${cmpMetric}||${mq}`];
+        if (singleRow && singleRow[0]) {
+          const qLabel = (mq === 'Q1' || mq === 'Q2') ? `${mq} FY2026` : `${mq} FY2025`;
+          allRows.push([qLabel, singleRow[0][0]]);
+        }
+      }
+    }
+
+    // Filter to requested quarters
+    let filteredRows = allRows.filter(r => {
+      const qStr = cmpDim ? r[1] : r[0];
+      return mentionedQs.some(mq => qStr.includes(mq));
+    });
+    if (filteredRows.length === 0 && allRows.length > 0) filteredRows = allRows;
+
+    let headers = cmpDim ? [SEM.dimensions[cmpDim].label, 'Quarter', cmpDef.label] : ['Quarter', cmpDef.label];
+    steps.push({type:'result', headers, rows:filteredRows});
+
+    // Compute actual deltas
+    steps.push({type:'think', text:`Computing differences between ${mentionedQs[0]} and ${mentionedQs[1]}...`});
+
+    const parseNum = s => parseFloat(String(s).replace(/[$,%K]/g,'').replace(/,/g,''));
+
+    if (cmpDim && filteredRows.length >= 2) {
+      // Group by dimension, pair up quarters, compute delta
+      const byDim = {};
+      for (const row of filteredRows) {
+        const dimVal = row[0], qtr = row[1], val = row[2];
+        if (!byDim[dimVal]) byDim[dimVal] = {};
+        byDim[dimVal][qtr] = val;
+      }
+      const deltaRows = [];
+      const unit = cmpDef.sql.includes('AVG') ? '$' : '$';
+      for (const [dimVal, qtrs] of Object.entries(byDim)) {
+        const q1Key = Object.keys(qtrs).find(k => k.includes(mentionedQs[0]));
+        const q2Key = Object.keys(qtrs).find(k => k.includes(mentionedQs[1]));
+        if (q1Key && q2Key) {
+          const v1 = parseNum(qtrs[q1Key]), v2 = parseNum(qtrs[q2Key]);
+          const delta = v2 - v1;
+          const pct = v1 !== 0 ? ((delta / v1) * 100).toFixed(1) : 'N/A';
+          const sign = delta >= 0 ? '+' : '';
+          deltaRows.push([dimVal, qtrs[q1Key], qtrs[q2Key], `${sign}$${Math.abs(delta).toLocaleString()}`, `${sign}${pct}%`]);
+        }
+      }
+      if (deltaRows.length > 0) {
+        steps.push({type:'result', headers:[SEM.dimensions[cmpDim].label, mentionedQs[0], mentionedQs[1], 'Delta', '% Change'], rows:deltaRows});
+      }
+      // Find biggest mover
+      let biggestPct = 0, biggestName = '';
+      for (const dr of deltaRows) {
+        const absPct = Math.abs(parseFloat(dr[4]));
+        if (absPct > biggestPct) { biggestPct = absPct; biggestName = dr[0]; }
+      }
+      steps.push({type:'insight', text:`Largest change: ${biggestName} with ${biggestPct.toFixed(1)}% shift between ${mentionedQs[0]} and ${mentionedQs[1]}. ${deltaRows.filter(r=>r[4].startsWith('-')).length} of ${deltaRows.length} categories declined. Review categories moving against the overall trend for potential investigation.`});
+    } else if (!cmpDim && filteredRows.length >= 2) {
+      const v1 = parseNum(filteredRows[0][1]), v2 = parseNum(filteredRows[1][1]);
+      const delta = v2 - v1;
+      const pct = v1 !== 0 ? ((delta / v1) * 100).toFixed(1) : 'N/A';
+      const sign = delta >= 0 ? '+' : '';
+      steps.push({type:'result', headers:['','Value'], rows:[
+        [mentionedQs[0], filteredRows[0][1]],
+        [mentionedQs[1], filteredRows[1][1]],
+        ['Delta', `${sign}$${Math.abs(delta).toLocaleString()}`],
+        ['% Change', `${sign}${pct}%`],
+      ]});
+      steps.push({type:'insight', text:`${cmpDef.label} changed by ${sign}${pct}% from ${mentionedQs[0]} to ${mentionedQs[1]} (${sign}$${Math.abs(delta).toLocaleString()}).`});
+    }
+    lastTopic = cmpMetric;
+    return {steps, metrics:[cmpMetric], dims: cmpDim ? [cmpDim,'fiscal_quarter'] : ['fiscal_quarter'], owner:cmpDef.owner};
+  }
+
+  // STEP 1: Parse intent
+  steps.push({type:'think', text:`Parsing question: "${question}"`});
+
+  // Identify metric
+  let metric = null;
+  const metricMap = [
+    {keys:["net bookings","total bookings","bookings"],id:"net_bookings"},
+    {keys:["gross bookings","before discount","contract value","tcv"],id:"gross_bookings"},
+    {keys:["recognized revenue","recognized rev","rev rec","asc 606"],id:"recognized_revenue"},
+    {keys:["billing","billed","billings","sap billing","total billed"],id:"total_billings"},
+    {keys:["scheduled revenue","unbilled backlog","backlog","deferred"],id:"scheduled_revenue"},
+    {keys:["deal count","how many deals","number of deals"],id:"deal_count"},
+    {keys:["deal size","avg deal","average deal"],id:"average_deal_size"},
+    {keys:["win rate","close rate","conversion rate"],id:"win_rate"},
+    {keys:["discount","avg discount","discount rate"],id:"discount_rate"},
+    {keys:["booking to billing","book to bill","b2b ratio"],id:"booking_to_billing"},
+    {keys:["discrepanc","mismatch","reconcil"],id:"discrepancy_count"},
+    {keys:["mapping","coverage","mapped"],id:"mapping_coverage"},
+    {keys:["pipeline","funnel","open deals"],id:"pipeline_value"},
+    {keys:["waterfall","order to cash"],id:"_waterfall"},
+    {keys:["total revenue"],id:"net_bookings"},
+    {keys:["revenue"],id:"_disambiguate"},
+  ];
+  for (const m of metricMap) {
+    for (const k of m.keys) { if (q.includes(k)) { metric = m.id; break; } }
+    if (metric) break;
+  }
+
+  // Identify dimensions (support multiple)
+  let dimensions = [];
+  const dimMap = [
+    {keys:["by product","product category","product line","per product","product type"],id:"product_category"},
+    {keys:["by quarter","fiscal quarter","quarterly","per quarter","each quarter"],id:"fiscal_quarter"},
+    {keys:["by region","per region","which region"],id:"region"},
+    {keys:["by segment","customer segment","per segment"],id:"customer_segment"},
+    {keys:["by deal type","by type","per type"],id:"deal_type"},
+    {keys:["by stage"],id:"stage"},
+    {keys:["by discrepancy"],id:"discrepancy_type"},
+  ];
+  for (const d of dimMap) {
+    for (const k of d.keys) {
+      if (q.includes(k) && !dimensions.includes(d.id)) { dimensions.push(d.id); break; }
+    }
+  }
+  let dimension = dimensions[0] || null;
+
+  // Identify quarter filter
+  let qFilter = null;
+  if (/q3/.test(q)) qFilter = "Q3";
+  else if (/q4/.test(q)) qFilter = "Q4";
+  else if (/q1/.test(q)) qFilter = "Q1";
+  else if (/q2/.test(q)) qFilter = "Q2";
+
+  // Auto-assign dimensions for certain metrics
+  if (metric === 'discrepancy_count' && !dimension) dimension = 'discrepancy_type';
+  if (metric === 'pipeline_value' && !dimension) dimension = 'stage';
+  if (metric === 'win_rate' && !dimension) dimension = 'deal_type';
+
+  // Handle follow-up
+  if (!metric && (qFilter || dimension) && lastTopic) {
+    metric = lastTopic;
+    steps.push({type:'think', text:`No explicit metric found. Using previous context: ${SEM.metrics[metric]?.label || metric}`});
+  }
+
+  // Declined
+  const declined = ["commission","salary","headcount","employee","bonus","margin","cost","attrition","hire"];
+  if (!metric && declined.some(k => q.includes(k))) {
+    steps.push({type:'think', text:`Searching semantic layer for: "${question}"`});
+    steps.push({type:'fail', text:`No matching metric found. The semantic layer contains 13 governed metrics: bookings, billings, recognized revenue, scheduled revenue, deal count, average deal size, win rate, discount rate, booking-to-billing ratio, discrepancy count, mapping coverage, and pipeline value. The requested metric is not among them.`});
+    return {steps, declined:true, suggest:"Try: net bookings, recognized revenue, billings, scheduled revenue, waterfall, pipeline, win rate, or discrepancies."};
+  }
+
+  if (!metric) {
+    steps.push({type:'think', text:`Could not identify a governed metric in this question.`});
+    return {steps, declined:true, suggest:"Try asking about: net bookings, gross bookings, recognized revenue, billings, scheduled revenue, deal size, win rate, discrepancies, mapping coverage, or pipeline."};
+  }
+
+  // Disambiguation: "revenue" is ambiguous
+  if (metric === '_disambiguate') {
+    steps.push({type:'think', text:`The term "revenue" is ambiguous. The semantic layer has 3 revenue metrics with different definitions. I should clarify before querying.`});
+    steps.push({type:'lookup', metric:'net_bookings', def:SEM.metrics.net_bookings});
+    steps.push({type:'lookup', metric:'recognized_revenue', def:SEM.metrics.recognized_revenue});
+    steps.push({type:'lookup', metric:'gross_bookings', def:SEM.metrics.gross_bookings});
+    steps.push({type:'think', text:`These three metrics differ by up to $36M depending on which one is used:\n- Net Bookings: $146.8M (CRM, after discounts)\n- Recognized Revenue: $127.4M (SAP, posted only)\n- Gross Bookings: $163.1M (CRM, before discounts)\n\nWithout governance, different teams use different definitions, creating conflicting numbers in meetings. This is exactly why the semantic layer exists.`});
+    steps.push({type:'result', headers:['Metric','Value','Source','Definition'], rows:[
+      ['Net Bookings','$146,812,491','CRM','Closed-won after discounts'],
+      ['Recognized Revenue','$127,436,892','SAP','Posted billings (ASC 606)'],
+      ['Gross Bookings','$163,108,320','CRM','Contract value before discounts'],
+    ]});
+    steps.push({type:'insight', text:`The $36M gap between Gross Bookings and Recognized Revenue spans 3 layers: $16.3M in discounts (gross to net), $12.6M in unbilled backlog (net to billed), and $6.8M pending posting (billed to recognized). Try asking specifically for "net bookings", "recognized revenue", or "gross bookings" to get the exact metric you need. Or ask for the "revenue waterfall" to see all three in context.`});
+    lastTopic = 'net_bookings';
+    return {steps, metrics:['net_bookings','recognized_revenue','gross_bookings'], dims:[], owner:'Multiple owners'};
+  }
+
+  // Waterfall is special
+  if (metric === '_waterfall') {
+    steps.push({type:'think', text:`User wants the revenue waterfall. This requires multiple metrics: net_bookings, total_billings, recognized_revenue, and scheduled_revenue.`});
+    steps.push({type:'lookup', metric:'net_bookings', def:SEM.metrics.net_bookings});
+    steps.push({type:'lookup', metric:'total_billings', def:SEM.metrics.total_billings});
+    steps.push({type:'lookup', metric:'recognized_revenue', def:SEM.metrics.recognized_revenue});
+    steps.push({type:'lookup', metric:'scheduled_revenue', def:SEM.metrics.scheduled_revenue});
+    steps.push({type:'think', text:`Building waterfall: Bookings (CRM) -> Billed (SAP) -> Recognized (posted) -> with Pending and Unbilled as delta calculations.`});
+    const sql = `-- Revenue Waterfall (multi-source)\nSELECT 'Net Bookings' AS stage,\n  ${SEM.metrics.net_bookings.sql} AS amount\nFROM crm_opportunities\nUNION ALL\nSELECT 'Total Billed',\n  ${SEM.metrics.total_billings.sql}\nFROM sap_billing\nUNION ALL\nSELECT 'Recognized Revenue',\n  ${SEM.metrics.recognized_revenue.sql}\nFROM sap_billing`;
+    steps.push({type:'sql', text:sql});
+    steps.push({type:'validate', text:`Validated: all 3 source tables (crm_opportunities, sap_billing) are in the semantic layer. No unauthorized tables or columns referenced. Query uses only governed metric definitions.`});
+    const key = "net_bookings|fiscal_quarter|";
+    const rows = [["Net Bookings (CRM)","$146,812,491"],["Total Billed (SAP)","$134,218,440"],["Recognized Revenue","$127,436,892"],["Pending Posting","$6,781,548"],["Unbilled Backlog","$12,594,051"]];
+    steps.push({type:'result', headers:["Stage","Amount"], rows});
+    steps.push({type:'insight', text:`The waterfall shows $146.8M booked, $134.2M billed, $127.4M recognized. The $12.6M unbilled backlog represents deals closed in CRM but awaiting SAP billing. The $6.8M pending posting will convert to recognized revenue once approved.`});
+    lastTopic = 'net_bookings';
+    return {steps, metrics:['net_bookings','total_billings','recognized_revenue','scheduled_revenue'], dims:[], owner:'Finance'};
+  }
+
+  const metricDef = SEM.metrics[metric];
+  if (!metricDef) {
+    steps.push({type:'fail', text:`Metric "${metric}" not found in semantic layer.`});
+    return {steps, declined:true, suggest:"Try: net bookings, billings, recognized revenue, or scheduled revenue."};
+  }
+
+  lastTopic = metric;
+
+  // STEP 2: Look up semantic definition
+  steps.push({type:'think', text:`Identified metric: "${metricDef.label}". Looking up semantic layer definition...`});
+  steps.push({type:'lookup', metric, def:metricDef});
+
+  if (dimensions.length > 0) {
+    const dimLabels = dimensions.map(d => SEM.dimensions[d]?.label || d);
+    const dimCols = dimensions.map(d => SEM.dimensions[d]?.col || d);
+    steps.push({type:'think', text:`Identified ${dimensions.length} dimension${dimensions.length>1?'s':''}: ${dimLabels.join(', ')}. Columns: ${dimCols.join(', ')}. Will add GROUP BY clause.`});
+  }
+
+  if (qFilter) {
+    steps.push({type:'think', text:`Identified filter: fiscal_quarter = '${qFilter} FY2025'. Will add WHERE clause.`});
+  }
+
+  // STEP 3: Construct SQL
+  steps.push({type:'think', text:`Constructing SQL query from semantic layer definitions...`});
+
+  let sqlParts = [`SELECT`];
+  let headers = [];
+
+  // Add all dimension columns
+  for (const dim of dimensions) {
+    const dd = SEM.dimensions[dim];
+    if (dd) { sqlParts.push(`  ${dd.col},`); headers.push(dd.label); }
+  }
+
+  if (metric === 'total_billings') {
+    sqlParts.push(`  SUM(billed_amount_usd) AS total_billings,`);
+    sqlParts.push(`  ${SEM.metrics.recognized_revenue.sql} AS posted,`);
+    sqlParts.push(`  SUM(CASE WHEN posting_status='PENDING' THEN billed_amount_usd ELSE 0 END) AS pending`);
+    headers.push("Total Billings","Posted","Pending");
+  } else {
+    sqlParts.push(`  ${metricDef.sql} AS ${metric}`);
+    headers.push(metricDef.label);
+  }
+  sqlParts.push(`FROM ${metricDef.table === 'derived' ? 'crm_opportunities' : metricDef.table}`);
+  if (qFilter) {
+    const fCol = metricDef.table === 'sap_billing' ? 'fiscal_period' : 'fiscal_quarter';
+    sqlParts.push(`WHERE ${fCol} = '${qFilter} FY2025'`);
+  }
+  if (dimensions.length > 0) {
+    const groupCols = dimensions.map(d => SEM.dimensions[d]?.col).filter(Boolean);
+    sqlParts.push(`GROUP BY ${groupCols.join(', ')}`);
+    sqlParts.push(`ORDER BY ${metric} DESC`);
+  }
+  const sql = sqlParts.join('\n');
+  steps.push({type:'sql', text:sql});
+
+  // STEP 4: Validate
+  const table = metricDef.table === 'derived' ? 'crm_opportunities' : metricDef.table;
+  const tableValid = SEM.tables[table] ? true : false;
+  steps.push({type:'validate', text:`Checking table "${table}"... ${tableValid ? 'FOUND in semantic layer.' : 'NOT FOUND.'}\nChecking metric "${metricDef.label}"... Governed by ${metricDef.owner}.\nChecking for blocked patterns (DROP, DELETE, INSERT, UNION)... None detected.\n${tableValid ? 'VALIDATION PASSED. Executing query.' : 'VALIDATION FAILED.'}`});
+
+  // STEP 5: Results - try multi-dim key first, then single dim, then base
+  const dimKey = dimensions.join('+');
+  const rKey = `${metric}|${dimKey}|${qFilter||''}`;
+  let rows = R[rKey];
+  if (!rows) {
+    // Try single first dimension, then no dimension
+    rows = R[`${metric}|${dimensions[0]||''}|`] || R[`${metric}||`];
+  }
+  if (rows) {
+    steps.push({type:'result', headers, rows});
+  }
+
+  // STEP 6: Insight
+  const dimLabelsStr = dimensions.map(d => SEM.dimensions[d]?.label).filter(Boolean).join(' and ');
+  let insight = `Results returned from ${metricDef.table}${qFilter ? `, filtered to ${qFilter} FY2025` : ''}${dimLabelsStr ? `, grouped by ${dimLabelsStr}` : ''}.`;
+  if (metric === 'net_bookings' && dimensions.length === 0 && !qFilter) insight = "Total net bookings of $146.8M across all closed-won deals. This is the CRM-side view of revenue before SAP billing and recognition.";
+  if (metric === 'net_bookings' && dimensions.length >= 2) insight = `Net bookings broken down by ${dimLabelsStr}. This cross-dimensional view lets you spot which product-quarter combinations are driving or dragging total revenue. Note how product mix shifts significantly between quarters.`;
+  if (metric === 'recognized_revenue') insight = "Recognized revenue represents what SAP has actually billed and posted per ASC 606 rules. The gap between net bookings and recognized revenue is the unbilled backlog.";
+  if (metric === 'scheduled_revenue') insight = "$12.6M in contracted revenue has not yet been billed in SAP. This unbilled backlog represents deals awaiting order processing, delivery confirmation, or billing document creation.";
+  if (metric === 'booking_to_billing') insight = "Ratio of 1.094 means bookings exceed billings by 9.4%, indicating growing unbilled backlog. Target range is 0.95-1.05. A ratio consistently above 1.05 signals billing process delays.";
+  if (metric === 'mapping_coverage') insight = "93.3% coverage is below the 98% target. The gap represents customers whose SFDC accounts lack valid SAP customer mappings, making reconciliation impossible for those accounts.";
+  if (metric === 'total_billings') insight = "$134.2M total billed. $127.4M is posted (recognized revenue). $6.8M is pending posting and will convert once approved by Finance.";
+  steps.push({type:'insight', text:insight});
+
+  return {steps, metrics:[metric], dims: dimensions, owner:metricDef.owner};
+}
+
+// ── Render the reasoning chain ──
+function hlSem(m,d){document.querySelectorAll('.metric-item').forEach(e=>e.classList.remove('highlight'));document.querySelectorAll('.dim-tag').forEach(e=>e.classList.remove('highlight'));m.forEach(x=>{const e=document.querySelector(`[data-metric="${x}"]`);if(e)e.classList.add('highlight')});d.forEach(x=>{const e=document.querySelector(`[data-dim="${x}"]`);if(e)e.classList.add('highlight')})}
+
+async function askQ(preset) {
+  const inp = document.getElementById('userInput');
+  const q = preset || inp.value.trim();
+  if (!q) return;
+  inp.value = '';
+  const cb = document.getElementById('chatBody');
+
+  // User message
+  cb.innerHTML += `<div class="msg user"><div class="sender">You</div><div class="bubble">${q}</div></div>`;
+  cb.scrollTop = cb.scrollHeight;
+
+  // Thinking indicator
+  const tid = 't' + Date.now();
+  cb.innerHTML += `<div class="msg agent" id="${tid}"><div class="sender">Agent</div><div class="bubble"><div id="chain-${tid}" class="reasoning-chain"></div></div></div>`;
+  cb.scrollTop = cb.scrollHeight;
+
+  const result = reason(q);
+  const chain = document.getElementById('chain-' + tid);
+
+  // Animate each reasoning step
+  for (let i = 0; i < result.steps.length; i++) {
+    const s = result.steps[i];
+    const el = document.createElement('div');
+    el.className = 'reason-step';
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(6px)';
+
+    if (s.type === 'think') {
+      el.innerHTML = `<div class="rs-icon" style="background:rgba(79,195,247,0.15);color:var(--blue)">&#128161;</div><div class="rs-content"><div class="rs-label">Thinking</div><div class="rs-text">${s.text}</div></div>`;
+    } else if (s.type === 'lookup') {
+      el.innerHTML = `<div class="rs-icon" style="background:var(--nv-glow);color:var(--nv)">&#128270;</div><div class="rs-content"><div class="rs-label">Semantic Layer Lookup</div><div class="rs-text"><strong>${s.def.label}</strong>: ${s.def.desc}<br><span style="color:var(--muted);font-size:10px">SQL: <code style="display:inline;padding:1px 4px;font-size:10px">${s.def.sql}</code></span><br><span style="color:var(--muted);font-size:10px">Table: ${s.def.table} | Owner: ${s.def.owner}</span></div></div>`;
+    } else if (s.type === 'sql') {
+      el.innerHTML = `<div class="rs-icon" style="background:rgba(179,136,255,0.15);color:var(--purple)">&#9998;</div><div class="rs-content"><div class="rs-label">Generated SQL</div><code>${s.text}</code></div>`;
+    } else if (s.type === 'validate') {
+      el.innerHTML = `<div class="rs-icon" style="background:rgba(118,185,0,0.15);color:var(--nv)">&#10003;</div><div class="rs-content"><div class="rs-label">Semantic Validation</div><div class="rs-text" style="white-space:pre-line;font-size:11px">${s.text}</div></div>`;
+    } else if (s.type === 'result') {
+      let tbl = `<table class="result-table"><thead><tr>${s.headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${s.rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+      el.innerHTML = `<div class="rs-icon" style="background:rgba(38,198,218,0.15);color:var(--teal)">&#128202;</div><div class="rs-content"><div class="rs-label">Query Results</div>${tbl}</div>`;
+    } else if (s.type === 'insight') {
+      el.innerHTML = `<div class="rs-icon" style="background:rgba(255,183,77,0.15);color:var(--orange)">&#128172;</div><div class="rs-content"><div class="rs-label">Analysis</div><div class="rs-text">${s.text}</div></div>`;
+    } else if (s.type === 'fail') {
+      el.innerHTML = `<div class="rs-icon" style="background:rgba(239,83,80,0.15);color:var(--red)">&#10007;</div><div class="rs-content"><div class="rs-label">Not Found</div><div class="rs-text">${s.text}</div></div>`;
+    }
+
+    chain.appendChild(el);
+    await sleep(350 + Math.random() * 250);
+    el.style.transition = 'all 0.3s ease';
+    el.style.opacity = '1';
+    el.style.transform = 'translateY(0)';
+    cb.scrollTop = cb.scrollHeight;
+  }
+
+  // Add declined suggestion if needed
+  if (result.declined) {
+    const sg = document.createElement('div');
+    sg.className = 'reason-step';
+    sg.innerHTML = `<div class="rs-content" style="background:rgba(239,83,80,0.06);border:1px solid rgba(239,83,80,0.15);border-radius:6px;padding:8px 10px;font-size:11px"><strong style="color:var(--red)">Query declined.</strong> ${result.suggest}</div>`;
+    chain.appendChild(sg);
+  }
+
+  // Add governance footer
+  if (result.owner) {
+    const gf = document.createElement('div');
+    gf.style.cssText = 'font-size:10px;color:var(--muted);margin-top:8px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.05)';
+    gf.innerHTML = `Governed by: <strong style="color:var(--nv)">${result.owner}</strong>`;
+    chain.appendChild(gf);
+  }
+
+  // Highlight sidebar
+  hlSem(result.metrics||[], result.dims||[]);
+  cb.scrollTop = cb.scrollHeight;
+
+  // Update query counter in status bar
+  const qc = document.getElementById('queryCount');
+  if (qc) qc.textContent = parseInt(qc.textContent) + 1;
+}
+
+/* ═══════════════════════════════════════
+   PANEL 3: ANOMALY DETECTION
+   ═══════════════════════════════════════ */
+const ANOMALIES = [
+  {severity:'critical',cls:'critical',badge:'severity-critical',metric:'Data Center Revenue (APAC)',id:'A1',
+    detail:'APAC Data Center bookings are 23% below the 30-day rolling average. This is outside the 2-sigma threshold.',
+    context:'<strong>Root cause:</strong> Three hyperscaler customers (Hyperion Cloud, Nexus AI, Quantum Dynamics) have not generated any billing documents in the last 12 days. Combined, these accounts represent $18.2M in expected Q3 billings.<br><br><strong>Historical pattern:</strong> Hyperion Cloud had a similar 10-day gap in Q1 FY2025 due to procurement approval delays. Nexus AI and Quantum Dynamics have no prior gaps.<br><br><strong>Recommended action:</strong> Escalate to APAC Sales Ops for customer outreach on Nexus AI and Quantum Dynamics. Monitor Hyperion Cloud for 48 more hours (likely procurement delay).',
+    related:null,time:'Detected 14 min ago'},
+  {severity:'critical',cls:'critical',badge:'severity-critical',metric:'Unbilled Backlog Spike',id:'A2',
+    detail:'Unbilled backlog increased 34% week-over-week, from $14.4M to $19.3M. 10 deals have zero SAP billing activity.',
+    context:'<strong>Affected deals:</strong> 6 are in US-East (Enterprise segment), 3 in APAC (Cloud CSP), 1 in EMEA (Government).<br><br><strong>Root cause:</strong> US-East deals are likely waiting on purchase order validation. The 3 APAC deals involve Stratos Computing (see Alert #4 below), whose SAP master data request has been pending for 15 days.<br><br><strong>Recommended action:</strong> Priority 1: Process Stratos Computing SAP mapping (blocking $4.8M). Priority 2: Follow up with US-East on PO validation.',
+    related:'Linked to <strong>Alert #4</strong> (Stratos Computing mapping gap) and <strong>Alert #1</strong> (APAC revenue shortfall). Resolving the mapping would convert $4.8M from unbilled to billable.',time:'Detected 22 min ago'},
+  {severity:'warning',cls:'warning',badge:'severity-warning',metric:'Gaming Discount Rate Trend',id:'A3',
+    detail:'Average discount for Gaming segment increased from 8.2% to 10.5% over 6 weeks. This erodes $3.1M in gross margin at current volume.',
+    context:'<strong>Analysis:</strong> 72% of the increase is concentrated in 3 OEM channel accounts. The remaining 28% is from competitive pressure during the consumer GPU refresh cycle.<br><br><strong>Benchmark:</strong> Data Center discounts remain stable at 7.2%. Gaming historically peaks during product transitions.<br><br><strong>Recommended action:</strong> Flag for Deal Desk review. Consider whether OEM pricing tier needs adjustment or if this is a temporary cycle effect.',
+    related:null,time:'Detected 1 hour ago'},
+  {severity:'warning',cls:'warning',badge:'severity-warning',metric:'Customer Mapping Degradation',id:'A4',
+    detail:'Mapping coverage dropped from 96.2% to 93.3% in 2 weeks. 1 new customer added without SAP mapping.',
+    context:'<strong>Unmapped customer:</strong> Stratos Computing (SF-015), added to Salesforce on April 8. No SAP master data request on file. SLA is 48 hours from CRM creation; currently at 15 days overdue.<br><br><strong>Impact:</strong> $4.8M in bookings cannot be reconciled. This single customer accounts for 26% of all "Missing SAP Mapping" discrepancies and is the primary driver of Alert #2 (backlog spike).<br><br><strong>Recommended action:</strong> Data steward to submit SAP master data request immediately. This is the highest-leverage fix: resolving one mapping unblocks $4.8M in billings.',
+    related:'Root cause of <strong>Alert #2</strong> (unbilled backlog). Also contributes to <strong>Alert #1</strong> (APAC revenue gap, as Stratos Computing is APAC Cloud CSP).',time:'Detected 2 hours ago'},
+  {severity:'info',cls:'info',badge:'severity-info',metric:'Billing Document Posting Velocity',id:'A5',
+    detail:'SAP billing posting rate is 12% above the 30-day average. 41 documents posted in the last 24 hours vs. average of 36.',
+    context:'<strong>Analysis:</strong> Consistent with quarter-end acceleration pattern. Q3 FY2025 close date is approaching and finance teams are processing backlog.<br><br><strong>No action required.</strong> Expected seasonal behavior. However, this elevated velocity may partially resolve <strong>Alert #2</strong> (unbilled backlog) over the next 48 hours as more deals move through the billing pipeline.',
+    related:'May partially resolve <strong>Alert #2</strong> as quarter-end billing catches up with bookings.',time:'Detected 3 hours ago'},
+];
+
+async function runAnomalyDetection(){
+  const btn=document.getElementById('runAnomalyBtn');
+  btn.disabled=true;btn.innerHTML='<span>&#9632;</span> Scanning...';
+  const feed=document.getElementById('anomalyFeed');feed.innerHTML='';
+  document.getElementById('anomalyImpact').style.display='none';
+
+  for(let i=0;i<ANOMALIES.length;i++){
+    const a=ANOMALIES[i];
+    const el=document.createElement('div');
+    el.className=`anomaly-card ${a.cls}`;
+    let relatedHtml = a.related ? `<div style="font-size:10px;margin-top:8px;padding:6px 8px;background:rgba(79,195,247,0.08);border:1px solid rgba(79,195,247,0.15);border-radius:4px;color:var(--blue)">&#128279; ${a.related}</div>` : '';
+    el.innerHTML=`<div class="anomaly-header"><div class="anomaly-metric"><span style="color:var(--muted);font-size:11px;margin-right:6px">#${i+1}</span>${a.metric}</div><span class="anomaly-severity ${a.badge}">${a.severity}</span></div><div class="anomaly-detail">${a.detail}</div><div class="anomaly-context">${a.context}</div>${relatedHtml}<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px"><div class="anomaly-time">${a.time}</div><div class="anomaly-actions"><button>View in Dashboard</button><button>Create Jira Ticket</button><button>Acknowledge</button></div></div>`;
+    feed.appendChild(el);
+    await sleep(700+Math.random()*400);
+    el.classList.add('visible');
+    feed.scrollTop=feed.scrollHeight;
+  }
+
+  // Show impact summary
+  await sleep(600);
+  document.getElementById('anomalyImpact').style.display='block';
+
+  btn.disabled=false;btn.innerHTML='<span>&#9654;</span> Scan Again';
+}
+
+/* ═══════════════════════════════════════
+   PANEL 4: DASHBOARD VALIDATION
+   ═══════════════════════════════════════ */
+const DASH_CHECKS = [
+  {
+    icon:'info', title:'Step 1: Capturing Tableau dashboard',
+    detail:'Playwright navigating to Tableau Public: Hotel Revenue Performance. Waiting for viz container to render...',
+    action:null
+  },
+  {
+    icon:'info', title:'Step 2: Extracting values with Claude Vision',
+    detail:'Sending screenshot to Claude API. Extracting all visible numbers, labels, chart values, filter states...',
+    action:null
+  },
+  {
+    icon:'info', title:'Step 3: Querying warehouse for ground truth',
+    detail:'Running governed SQL against Snowflake for each extracted metric. Using semantic layer definitions for Total Revenue, Room Revenue, F&B Revenue, Bookings, Room Nights, and per-hotel breakdowns...',
+    action:null
+  },
+  {
+    icon:'pass', title:'Total Revenue: MATCH',
+    detail:`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px;font-size:11px">
+      <div><span style="color:var(--muted)">Dashboard</span><br><strong>171,402K</strong></div>
+      <div><span style="color:var(--muted)">Warehouse</span><br><strong>171,402K</strong></div>
+      <div><span style="color:var(--muted)">Drift</span><br><strong style="color:var(--nv)">0.00%</strong></div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-top:4px">SQL: SELECT SUM(room_revenue + fnb_revenue + other_spending) FROM hotel_revenue WHERE year IN (2015,2016,2017)</div>`,
+    action: null
+  },
+  {
+    icon:'pass', title:'Room Revenue: MATCH',
+    detail:`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px;font-size:11px">
+      <div><span style="color:var(--muted)">Dashboard</span><br><strong>104,388K</strong></div>
+      <div><span style="color:var(--muted)">Warehouse</span><br><strong>104,388K</strong></div>
+      <div><span style="color:var(--muted)">Drift</span><br><strong style="color:var(--nv)">0.00%</strong></div>
+    </div>`,
+    action: null
+  },
+  {
+    icon:'fail', title:'F&B Revenue: MISMATCH',
+    detail:`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px;font-size:11px">
+      <div><span style="color:var(--muted)">Dashboard</span><br><strong>42,643K</strong></div>
+      <div><span style="color:var(--muted)">Warehouse</span><br><strong style="color:var(--red)">43,891K</strong></div>
+      <div><span style="color:var(--muted)">Drift</span><br><strong style="color:var(--red)">2.93%</strong></div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-top:4px">SQL: SELECT SUM(fnb_revenue) FROM hotel_revenue WHERE year IN (2015,2016,2017)</div>
+    <div style="font-size:10px;color:var(--red);margin-top:4px;font-weight:600">Root cause: Warehouse received 847 retroactive F&B adjustments on Feb 3 (banquet billing corrections for River Resort and Island Resort). Dashboard extract predates this update. Delta: $1,248K.</div>`,
+    action: null
+  },
+  {
+    icon:'fail', title:'No. of Bookings: MISMATCH',
+    detail:`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px;font-size:11px">
+      <div><span style="color:var(--muted)">Dashboard</span><br><strong>4,752</strong></div>
+      <div><span style="color:var(--muted)">Warehouse</span><br><strong style="color:var(--red)">4,698</strong></div>
+      <div><span style="color:var(--muted)">Drift</span><br><strong style="color:var(--red)">-1.14%</strong></div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-top:4px">SQL: SELECT COUNT(DISTINCT booking_id) FROM bookings WHERE status != 'CANCELLED' AND year IN (2015,2016,2017)</div>
+    <div style="font-size:10px;color:var(--red);margin-top:4px;font-weight:600">Root cause: Warehouse now excludes 54 bookings that were retroactively cancelled (no-shows reclassified in March). Dashboard still counts them because the extract is stale.</div>`,
+    action: null
+  },
+  {
+    icon:'pass', title:'No. of Room Nights: MATCH',
+    detail:`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px;font-size:11px">
+      <div><span style="color:var(--muted)">Dashboard</span><br><strong>20,602</strong></div>
+      <div><span style="color:var(--muted)">Warehouse</span><br><strong>20,602</strong></div>
+      <div><span style="color:var(--muted)">Drift</span><br><strong style="color:var(--nv)">0.00%</strong></div>
+    </div>`,
+    action: null
+  },
+  {
+    icon:'fail', title:'River Resort Revenue: MISMATCH',
+    detail:`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px;font-size:11px">
+      <div><span style="color:var(--muted)">Dashboard</span><br><strong>35,190K</strong></div>
+      <div><span style="color:var(--muted)">Warehouse</span><br><strong style="color:var(--red)">36,042K</strong></div>
+      <div><span style="color:var(--muted)">Drift</span><br><strong style="color:var(--red)">2.42%</strong></div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-top:4px">SQL: SELECT SUM(total_revenue) FROM hotel_revenue WHERE hotel_name = 'River Resort'</div>
+    <div style="font-size:10px;color:var(--red);margin-top:4px;font-weight:600">Largest single-hotel variance. $852K delta driven by retroactive F&B banquet billing corrections applied to River Resort in February.</div>`,
+    action: null
+  },
+  {
+    icon:'pass', title:'Palm Resort Revenue: MATCH',
+    detail:`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px;font-size:11px">
+      <div><span style="color:var(--muted)">Dashboard</span><br><strong>24,869K</strong></div>
+      <div><span style="color:var(--muted)">Warehouse</span><br><strong>24,869K</strong></div>
+      <div><span style="color:var(--muted)">Drift</span><br><strong style="color:var(--nv)">0.00%</strong></div>
+    </div>`,
+    action: null
+  },
+  {
+    icon:'pass', title:'Revenue Share Donut: validated',
+    detail:`Recalculating from warehouse values:<br>
+    Room: 104,388 / 172,650 = <strong>60.5%</strong> (dashboard: 61%)<br>
+    F&B: 43,891 / 172,650 = <strong>25.4%</strong> (dashboard: 25%)<br>
+    Other: 24,371 / 172,650 = <strong>14.1%</strong> (dashboard: 14%)<br>
+    <span style="color:var(--muted);font-size:10px">Note: Donut still shows stale ratios but rounding masks the F&B shift. With warehouse data, F&B share would round to 25% either way.</span>`,
+    action: null
+  },
+  {
+    icon:'fail', title:'2017 Revenue: MISMATCH',
+    detail:`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px;font-size:11px">
+      <div><span style="color:var(--muted)">Dashboard</span><br><strong>51,210K</strong></div>
+      <div><span style="color:var(--muted)">Warehouse</span><br><strong style="color:var(--red)">52,458K</strong></div>
+      <div><span style="color:var(--muted)">Drift</span><br><strong style="color:var(--red)">2.44%</strong></div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-top:4px">SQL: SELECT SUM(total_revenue) FROM hotel_revenue WHERE year = 2017</div>
+    <div style="font-size:10px;color:var(--red);margin-top:4px;font-weight:600">The F&B corrections primarily affect 2017 data. Dashboard shows -9.0% YoY decline, but warehouse shows -6.7%. The revenue decline is less severe than what stakeholders are seeing. This could change strategic decisions.</div>`,
+    action: null
+  },
+  {
+    icon:'fail', title:'Total Revenue (recalculated): MISMATCH',
+    detail:`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px;font-size:11px">
+      <div><span style="color:var(--muted)">Dashboard</span><br><strong>171,402K</strong></div>
+      <div><span style="color:var(--muted)">Warehouse (adj.)</span><br><strong style="color:var(--red)">172,650K</strong></div>
+      <div><span style="color:var(--muted)">Drift</span><br><strong style="color:var(--red)">0.73%</strong></div>
+    </div>
+    <div style="font-size:10px;color:var(--orange);margin-top:4px;font-weight:600">Total Revenue KPI initially validated at Step 4 because the stale extract is internally consistent. However, comparing against the current warehouse (which includes February adjustments), actual total revenue is $1,248K higher than displayed. The dashboard is understating revenue by $1.25M.</div>`,
+    action: null
+  },
+];
+
+async function runDashboardValidation() {
+  const btn = document.getElementById('runDashValBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span>&#9632;</span> Validating...';
+  const feed = document.getElementById('dashValFeed');
+  feed.innerHTML = '';
+  document.getElementById('dashValSummary').style.display = 'none';
+
+  // Reset all visual highlights
+  document.getElementById('dashRefreshLabel').style.color = 'rgba(255,255,255,0.5)';
+  document.getElementById('dashRefreshLabel').style.fontWeight = 'normal';
+  document.getElementById('dashRefreshLabel').style.fontSize = '9px';
+
+  for (let i = 0; i < DASH_CHECKS.length; i++) {
+    const c = DASH_CHECKS[i];
+    const el = document.createElement('div');
+    el.className = 'check-item';
+    el.innerHTML = `
+      <div class="check-icon ${c.icon}">${c.icon==='pass'?'&#10003;':c.icon==='fail'?'&#10007;':'i'}</div>
+      <div>
+        <div class="check-title">${c.title}</div>
+        <div class="check-detail">${c.detail}</div>
+      </div>`;
+    feed.appendChild(el);
+
+    await sleep(450 + Math.random() * 350);
+    el.classList.add('visible');
+    feed.scrollTop = feed.scrollHeight;
+
+    if (c.action) c.action();
+  }
+
+  await sleep(600);
+  document.getElementById('dashValSummary').style.display = 'block';
+
+  btn.disabled = false;
+  btn.innerHTML = '<span>&#9654;</span> Validate Again';
+}
+
+/* Utility */
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+</script>
+
+</body>
+</html>
